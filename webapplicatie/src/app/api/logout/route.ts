@@ -1,25 +1,17 @@
-import mysql from "mysql2/promise";
-import { NextResponse } from "next/server";
 
-export async function POST(req: Request) {
-  const token = req.headers
-    .get("cookie")
-    ?.split("session=")[1]
-    ?.split(";")[0];
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { db } from "@/../lib/db";
+
+export async function POST(req: NextRequest) {
+  const token = req.cookies.get("session")?.value;
 
   if (token) {
-    const db = await mysql.createConnection({
-      host: "localhost",
-      user: "root",
-      password: "",
-      database: "woningen_db",
-    });
-
-    await db.execute("DELETE FROM sessions WHERE token = ?", [token]);
-    await db.end();
+    await db.query("DELETE FROM sessions WHERE token = ?", [token]);
   }
-  
+
   const res = NextResponse.json({ success: true });
-  res.cookies.set("session", "", { maxAge: 0, path: "/" });
+  res.cookies.set("session", "", { path: "/", maxAge: 0 });
+
   return res;
 }

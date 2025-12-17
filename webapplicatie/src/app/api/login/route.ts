@@ -1,46 +1,37 @@
-import mysql from "mysql2/promise";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { db } from "@/../lib/db";
 import crypto from "crypto";
 
 export async function POST(req: NextRequest) {
   const { gebruikersnaam, wachtwoord } = await req.json();
 
-  const db = await mysql.createConnection({
-    host: "localhost",
-    user: "root",
-    password: "",
-    database: "woningen_db",
-  });
-
-  // Controleer login
-  const [rows] = await db.execute(
-    "SELECT * FROM woningen WHERE gebruikersnaam = ? AND wachtwoord = ?",
+  const [users]: any = await db.query(
+    "SELECT woning_id, rol FROM woningen WHERE gebruikersnaam = ? AND wachtwoord = ?",
     [gebruikersnaam, wachtwoord]
   );
 
-  if ((rows as any).length === 0) {
-    await db.end();
+  if (users.length === 0) {
     return NextResponse.json(
       { success: false, message: "Ongeldige login" },
       { status: 401 }
     );
   }
 
-  const token = crypto.randomBytes(32).toString("hex");
-  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 1 day
+  const token = crypto.randomUUID();
+  const expires = new Date(Date.now() + 1000 * 60 * 60 * 24);
 
-  await db.execute(
-    "INSERT INTO sessions (token, gebruikersnaam, expires_at) VALUES (?, ?, ?)",
-    [token, gebruikersnaam, expiresAt]
+  await db.query(
+    "INSERT INTO sessions (token, user_id, expires_at) VALUES (?, ?, ?)",
+    [token, users[0].id, expires]
   );
 
-  await db.end();
-
   const res = NextResponse.json({ success: true });
+
   res.cookies.set("session", token, {
     httpOnly: true,
     path: "/",
-    maxAge: 24 * 60 * 60,
+    maxAge: 60 * 60 * 24,
   });
 
   return res;
