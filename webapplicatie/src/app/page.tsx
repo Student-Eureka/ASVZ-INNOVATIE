@@ -1,214 +1,229 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 
-// --- Types ---
+// --- TYPES ---
 interface Pomp {
   id: string | number;
   naam: string;
-  status: string;
+  status: string; // Bijv: "Aan", "Uit", "Storing"
 }
 
-export default function Home() {
+// --- UTILITY ---
+function clsx(...c: Array<string | false | null | undefined>) {
+  return c.filter(Boolean).join(" ");
+}
+
+// --- COMPONENT: Status Badge ---
+function StatusPill({ status }: { status: string }) {
+  const isAan = status.toLowerCase() === "aan";
+  return (
+    <span
+      className={clsx(
+        "inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold border",
+        isAan
+          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+          : "bg-slate-50 text-slate-500 border-slate-200"
+      )}
+    >
+      {status}
+    </span>
+  );
+}
+
+// --- COMPONENT: StatCard ---
+function StatCard({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white shadow-sm px-4 py-3">
+      <p className="text-xs text-slate-500">{label}</p>
+      <p className="text-lg font-semibold text-slate-900">{value}</p>
+    </div>
+  );
+}
+
+export default function DashboardPage() {
   const router = useRouter();
 
-  // --- State ---
+  // --- STATE ---
   const [pompen, setPompen] = useState<Pomp[]>([]);
-  const [isAanHetLaden, setIsAanHetLaden] = useState<boolean>(true);
-  const [foutmelding, setFoutmelding] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [q, setQ] = useState("");
 
-  // --- Data Ophalen ---
+  // --- DATA OPHALEN ---
   useEffect(() => {
     const haalPompenOp = async () => {
       try {
-        // PAS OP: Vervang dit door je eigen IP
-        const response = await fetch("http://192.168.x.x/api/pompen.php");
-
-        if (!response.ok) {
-          throw new Error("Kon de data niet ophalen");
-        }
-
-        const data = (await response.json()) as Pomp[];
+        // PAS OP: Vervang dit door het juiste IP-adres van je Pi
+        const res = await fetch("http://192.168.x.x/api/pompen.php");
+        if (!res.ok) throw new Error("Kon data niet ophalen");
+        
+        const data = (await res.json()) as Pomp[];
         setPompen(data);
-      } catch (error) {
-        console.error("Fout bij ophalen:", error);
-        setFoutmelding("Kan geen verbinding maken met de Pi.");
+      } catch (err) {
+        console.error(err);
+        setError("Kan geen verbinding maken met de Pi.");
       } finally {
-        setIsAanHetLaden(false);
+        setLoading(false);
       }
     };
 
     haalPompenOp();
+    
+    // Ververs elke 5 seconden
+    const interval = setInterval(haalPompenOp, 5000);
+    return () => clearInterval(interval);
   }, []);
 
+  // --- UITLOGGEN ---
   const logout = async () => {
     await fetch("/api/logout", { method: "POST" });
     router.push("/login");
   };
 
-  // --- Statistieken ---
-  const totaalAantal = pompen.length;
-  const aantalAan = pompen.filter((p) => p.status.toLowerCase() === "aan").length;
-  const aantalUit = totaalAantal - aantalAan;
+  // --- FILTERS & STATS ---
+  const filteredPompen = useMemo(() => {
+    const s = q.trim().toLowerCase();
+    if (!s) return pompen;
+    return pompen.filter((p) => 
+      p.naam.toLowerCase().includes(s) || String(p.id).includes(s)
+    );
+  }, [pompen, q]);
 
-  // --- Kleuren ---
-  const colors = {
-    primaryPink: "#d6006e",
-    darkBlue: "#0f172a",
-    textDark: "#333",
-    textLight: "#666",
-  };
+  const stats = useMemo(() => {
+    const totaal = pompen.length;
+    const aan = pompen.filter((p) => p.status.toLowerCase() === "aan").length;
+    const uit = totaal - aan;
+    return { totaal, aan, uit };
+  }, [pompen]);
 
   return (
-    <>
-      {/* HIERONDER STAAT DE CSS (STIJL)
-         Dit zorgt ervoor dat de layout verandert op mobiel.
-      */}
-      <style jsx global>{`
-        body { margin: 0; padding: 0; font-family: sans-serif; background-color: ${colors.primaryPink}; }
-        
-        .layout-container {
-          display: flex;
-          padding: 20px;
-          gap: 20px;
-          max-width: 1400px;
-          margin: 0 auto;
-          width: 100%;
-          box-sizing: border-box;
-        }
-
-        /* De Sidebar (Menu) */
-        .sidebar {
-          width: 250px;
-          flex-shrink: 0;
-        }
-
-        /* De Statistiek Tegels */
-        .stats-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-          gap: 20px;
-        }
-
-        /* --- MOBIELE AANPASSINGEN --- */
-        @media (max-width: 768px) {
-          .layout-container {
-            flex-direction: column; /* Alles onder elkaar zetten */
-            padding: 10px;
-          }
-          .sidebar {
-            width: 100%; /* Sidebar breed maken */
-            margin-bottom: 10px;
-          }
-          .stats-grid {
-             grid-template-columns: 1fr; /* Tegels onder elkaar op mobiel */
-          }
-        }
-      `}</style>
-
-      <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
-        
-        {/* 1. Witte Topbalk */}
-        <header style={{ backgroundColor: "white", padding: "10px 20px", display: "flex", alignItems: "center", gap: "15px", boxShadow: "0 2px 5px rgba(0,0,0,0.1)", position: "sticky", top: 0, zIndex: 100 }}>
-           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", width: "36px", height: "36px", gap: "2px" }}>
-               <div style={{ backgroundColor: colors.primaryPink, color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: "10px" }}>A</div>
-               <div style={{ backgroundColor: "#bccf00", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: "10px" }}>S</div>
-               <div style={{ backgroundColor: "#bccf00", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: "10px" }}>V</div>
-               <div style={{ backgroundColor: colors.primaryPink, color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: "10px" }}>Z</div>
-            </div>
-            <div>
-              <h2 style={{ margin: 0, fontSize: "16px", color: colors.textDark }}>Sondedashboard</h2>
-            </div>
-        </header>
-
-        {/* 2. Main Layout (Gebruikt nu CSS klassen voor responsiveness) */}
-        <div className="layout-container">
-          
-          {/* SIDEBAR */}
-          <aside className="sidebar" style={{ backgroundColor: "white", borderRadius: "15px", padding: "20px", height: "fit-content" }}>
-            <h3 style={{ margin: "0 0 15px 0", fontSize: "16px", color: colors.textDark }}>Menu</h3>
-            <nav style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
-              <div style={{ backgroundColor: colors.darkBlue, color: "white", padding: "10px 15px", borderRadius: "8px", fontWeight: "bold", fontSize: "14px" }}>
-                Overzicht Pompen
-              </div>
-              <button onClick={logout} style={{ textAlign: "left", backgroundColor: "transparent", border: "none", color: "#d60000", padding: "10px 15px", marginTop: "10px", cursor: "pointer", fontWeight: "bold", fontSize: "14px" }}>
-                Uitloggen
-              </button>
-            </nav>
-          </aside>
-
-          {/* CONTENT */}
-          <main style={{ flex: 1, display: "flex", flexDirection: "column", gap: "20px", minWidth: 0 }}>
+    <main className="min-h-screen bg-[#E5007D]">
+      
+      {/* Topbar */}
+      <header className="sticky top-0 z-20 bg-white/90 border-b border-slate-200 backdrop-blur">
+        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
             
-            {/* Statistiek Tegels */}
-            <div className="stats-grid">
-              <div style={{ backgroundColor: "white", padding: "20px", borderRadius: "15px" }}>
-                <span style={{ display: "block", color: colors.textLight, fontSize: "12px" }}>Totaal</span>
-                <strong style={{ fontSize: "24px", color: colors.textDark }}>{totaalAantal}</strong>
-              </div>
-              <div style={{ backgroundColor: "white", padding: "20px", borderRadius: "15px" }}>
-                <span style={{ display: "block", color: colors.textLight, fontSize: "12px" }}>Actief</span>
-                <strong style={{ fontSize: "24px", color: "#00a884" }}>{aantalAan}</strong>
-              </div>
-              <div style={{ backgroundColor: "white", padding: "20px", borderRadius: "15px" }}>
-                <span style={{ display: "block", color: colors.textLight, fontSize: "12px" }}>In Rust</span>
-                <strong style={{ fontSize: "24px", color: colors.textLight }}>{aantalUit}</strong>
-              </div>
+            {/* HIER IS DE WIJZIGING: LOGO UIT PUBLIC MAP */}
+            <img 
+              src="/logo.svg" 
+              alt="ASVZ Logo" 
+              className="w-10 h-10 object-contain" 
+            />
+
+            <div>
+              <h1 className="text-lg font-semibold text-slate-900">Sonde Dashboard</h1>
+              <p className="text-xs text-slate-500">Actueel pompenoverzicht</p>
+            </div>
+          </div>
+          
+          <button 
+             onClick={logout} 
+             className="text-sm font-semibold text-slate-500 hover:text-[#E5007D]"
+          >
+            Uitloggen
+          </button>
+        </div>
+      </header>
+
+      {/* Layout */}
+      <div className="max-w-6xl mx-auto px-6 py-6 grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
+        
+        {/* Sidebar */}
+        <aside className="rounded-3xl bg-white border border-slate-200 shadow-sm p-3 h-fit hidden lg:block">
+          <nav className="space-y-1">
+            <button className="w-full text-left px-3 py-2 rounded-2xl text-sm font-semibold bg-slate-900 text-white transition">
+              Overzicht Pompen
+            </button>
+            <button 
+              onClick={() => router.push('/admin')}
+              className="w-full text-left px-3 py-2 rounded-2xl text-sm font-semibold hover:bg-slate-100 text-slate-900 transition"
+            >
+              Beheer / Admin
+            </button>
+            <button className="w-full text-left px-3 py-2 rounded-2xl text-sm font-semibold hover:bg-slate-100 text-slate-900 transition text-slate-400 cursor-not-allowed">
+              Logboek (Coming soon)
+            </button>
+          </nav>
+        </aside>
+
+        {/* Content */}
+        <section className="space-y-6">
+          
+          {/* Stats */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <StatCard label="Totaal Pompen" value={stats.totaal} />
+            <StatCard label="Nu Actief" value={stats.aan} />
+            <StatCard label="In Rust / Uit" value={stats.uit} />
+          </div>
+
+          {/* Tabel Container */}
+          <div className="rounded-3xl bg-white border border-slate-200 shadow-sm">
+            
+            {/* Tabel Header / Zoekbalk */}
+            <div className="p-5 border-b border-slate-200 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Zoek op pompnaam of ID..."
+                className="w-full md:w-64 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-[#E5007D]"
+              />
+              <button 
+                onClick={() => alert("Nieuwe pomp toevoegen?")}
+                className="hidden md:block rounded-2xl bg-slate-900 text-white px-4 py-2 text-sm font-semibold hover:bg-slate-800"
+              >
+                + Pomp
+              </button>
             </div>
 
-            {/* De Lijst met Pompen */}
-            <div style={{ backgroundColor: "white", borderRadius: "15px", padding: "20px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-                <h3 style={{ margin: 0, fontSize: "18px" }}>Pomp status</h3>
-              </div>
+            {/* De Lijst */}
+            <div className="p-5 overflow-x-auto">
+                {loading && <p className="text-center text-slate-500 py-4">Gegevens ophalen...</p>}
+                {error && <p className="text-center text-red-500 py-4 font-bold">{error}</p>}
 
-              {isAanHetLaden && <p>Laden...</p>}
-              {foutmelding && <p style={{ color: "red" }}>{foutmelding}</p>}
-
-              {!isAanHetLaden && !foutmelding && (
-                // WRAPPER VOOR HORIZONTAAL SCROLLEN OP TELEFOON
-                <div style={{ overflowX: "auto" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", minWidth: "500px" }}>
+                {!loading && !error && (
+                  <table className="w-full text-sm text-slate-900">
                     <thead>
-                      <tr style={{ borderBottom: "1px solid #eee" }}>
-                        <th style={{ padding: "10px", color: colors.textLight, fontSize: "12px" }}>NAAM</th>
-                        <th style={{ padding: "10px", color: colors.textLight, fontSize: "12px" }}>ID</th>
-                        <th style={{ padding: "10px", color: colors.textLight, fontSize: "12px" }}>STATUS</th>
-                        <th style={{ padding: "10px", textAlign: "right", color: colors.textLight, fontSize: "12px" }}>ACTIE</th>
+                      <tr className="text-left text-xs text-slate-500 uppercase tracking-wide">
+                        <th className="py-2 pl-2">Naam</th>
+                        <th className="py-2">ID</th>
+                        <th className="py-2">Status</th>
+                        <th className="py-2 text-right pr-2">Actie</th>
                       </tr>
                     </thead>
-                    <tbody>
-                      {pompen.map((pomp) => (
-                        <tr key={pomp.id} style={{ borderBottom: "1px solid #f9f9f9" }}>
-                          <td style={{ padding: "12px 10px", fontWeight: "bold", fontSize: "14px" }}>{pomp.naam}</td>
-                          <td style={{ padding: "12px 10px", color: colors.textLight, fontSize: "14px" }}>{pomp.id}</td>
-                          <td style={{ padding: "12px 10px" }}>
-                            <span style={{ 
-                              padding: "4px 8px", 
-                              borderRadius: "15px", 
-                              fontSize: "11px", 
-                              fontWeight: "bold",
-                              whiteSpace: "nowrap", // Voorkomt dat tekst breekt
-                              backgroundColor: pomp.status === "Aan" ? "#e6fffa" : "#f3f4f6",
-                              color: pomp.status === "Aan" ? "#00a884" : "#6b7280"
-                            }}>
-                              {pomp.status}
-                            </span>
+                    <tbody className="divide-y divide-slate-100">
+                      {filteredPompen.map((pomp) => (
+                        <tr key={pomp.id} className="hover:bg-slate-50 transition-colors">
+                          <td className="py-4 pl-2 font-semibold">{pomp.naam}</td>
+                          <td className="py-4 text-slate-500">{pomp.id}</td>
+                          <td className="py-4">
+                             <StatusPill status={pomp.status} />
                           </td>
-                          <td style={{ padding: "12px 10px", textAlign: "right", color: colors.primaryPink, fontSize: "13px", fontWeight: "bold" }}>
-                            Bekijk
+                          <td className="py-4 text-right pr-2">
+                            <button className="text-xs font-bold text-[#E5007D] hover:underline">
+                              Bekijk
+                            </button>
                           </td>
                         </tr>
                       ))}
+                      
+                      {filteredPompen.length === 0 && (
+                        <tr>
+                            <td colSpan={4} className="py-8 text-center text-slate-500">
+                                Geen pompen gevonden.
+                            </td>
+                        </tr>
+                      )}
                     </tbody>
                   </table>
-                </div>
-              )}
+                )}
             </div>
-          </main>
-        </div>
+          </div>
+
+        </section>
       </div>
-    </>
+    </main>
   );
 }
