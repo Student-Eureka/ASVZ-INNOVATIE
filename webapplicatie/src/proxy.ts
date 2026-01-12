@@ -1,45 +1,29 @@
-
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-/**
- * Middleware functie die inkomende requests controleert op sessies.
- * Beveiligde routes vereisen een actieve sessie.
- * ingelogde gebruikers kunnen niet naar /login, worden doorverwezen naar /.
- */
 export function proxy(request: NextRequest) {
   const session = request.cookies.get("session")?.value;
   const path = request.nextUrl.pathname;
 
-  // Controleer of het pad beschermd is
+  // Protected routes
   const protectedPaths = ["/", "/docs", "/pompen", "/statusboek"];
   const isProtected = protectedPaths.some(
     (p) => path === p || path.startsWith(p + "/")
   );
 
-  // Redirect naar login als niet ingelogd is en route beschermd is.
+  // ALTIJD loginpagina toestaan
+  if (path === "/login") {
+    if (session) {
+      return NextResponse.redirect(new URL("/", request.url));
+    }
+    return NextResponse.next();
+  }
+
+  // Redirect naar login als niet ingelogd is
   if (!session && isProtected) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // Redirect naar home als ingelogd en op login pagina
-  if (session && path === "/login") {
-    return NextResponse.redirect(new URL("/", request.url));
-  }
-
-  // Laat de request anders gewoon door
+  // Alles verder gewoon doorgaan
   return NextResponse.next();
 }
-
-/**
- * Middleware configuratie: Bepaalt welke routes deze middleware activeert
- */
-export const config = {
-  matcher: [
-    "/",
-    "/docs/:path*",
-    "/pompen/:path*",
-    "/statusboek/:path*",
-    "/login",
-  ],
-};
