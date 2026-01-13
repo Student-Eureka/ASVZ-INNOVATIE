@@ -22,23 +22,22 @@ export async function POST(req: NextRequest) {
     }
 
     const user = rows[0];
-
     const isValid = await bcrypt.compare(wachtwoord, user.wachtwoord);
 
     if (!isValid) {
       return NextResponse.json({ message: "Ongeldige login" }, { status: 401 });
     }
 
+    // Genereer sessie ID en expiratie
     const token = crypto.randomUUID();
-    const expires = new Date(Date.now() + 1000 * 60 * 60 * 8);
+    const expires = new Date(Date.now() + 1000 * 60 *60 * 8); // 8 uur
 
     await db.query(
-      "INSERT INTO sessions (token, user_id, expires_at) VALUES (?, ?, ?)",
+      "INSERT INTO sessions (id, user_id, expires_at) VALUES (?, ?, ?)",
       [token, user.woning_id, expires]
     );
 
     const res = NextResponse.json({ success: true });
-
     res.cookies.set("session", token, {
       httpOnly: true,
       path: "/",
