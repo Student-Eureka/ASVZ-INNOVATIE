@@ -2,24 +2,41 @@ import { db } from "@/../lib/db";
 import type { NextRequest } from "next/server";
 
 /**
- * Verifieert dat de gebruiker admin is.
- * Gooi een error als sessie ongeldig, verlopen of geen admin.
+ * Haalt sessie op en verwijdert verlopen sessies.
  */
-export async function requireAdmin(req: NextRequest) {
+export async function getSession(req: NextRequest) {
   const token = req.cookies.get("session")?.value;
-  if (!token) throw new Error("NO_SESSION");
+  if (!token) return null;
 
   const [sessions]: any = await db.query(
-    "SELECT user_id, expires_at FROM sessions WHERE token = ?",
+    "SELECT * FROM sessions WHERE id = ?",
     [token]
   );
 
-  if (!sessions.length) throw new Error("INVALID_SESSION");
-  if (new Date(sessions[0].expires_at) < new Date()) throw new Error("SESSION_EXPIRED");
+  if (!sessions.length) return null;
+
+  const session = sessions[0];
+
+  // Check of sessie verlopen is
+  if (new Date(session.expires_at) < new Date()) {
+    // Verwijder direct uit DB
+    await db.query("DELETE FROM sessions WHERE id = ?", [token]);
+    return null;
+  }
+
+  return session;
+}
+
+/**
+ * Verifieer admin user op basis van sessie cookie.
+ */
+export async function requireAdmin(req: NextRequest) {
+  const session = await getSession(req);
+  if (!session) throw new Error("NO_SESSION_OR_EXPIRED");
 
   const [users]: any = await db.query(
     "SELECT woning_id, rol, gebruikersnaam FROM woningen WHERE woning_id = ?",
-    [sessions[0].user_id]
+    [session.user_id]
   );
 
   if (!users.length || users[0].rol !== "admin") throw new Error("NOT_ADMIN");
