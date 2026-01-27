@@ -13,7 +13,6 @@ interface Pomp {
 }
 
 // --- CONFIGURATIE ---
-// Zorg dat dit IP klopt met je Raspberry Pi
 const MQTT_BROKER = "ws://10.1.1.237:9001"; 
 const MQTT_USER = "admin_user";
 const MQTT_PASS = "admin1"; 
@@ -24,9 +23,17 @@ function clsx(...c: Array<string | false | null | undefined>) {
 }
 
 function StatusPill({ status }: { status: string }) {
-  const isAan = status.toLowerCase() === "aan";
+  const isAan = status.toLowerCase() === "actief";
+  const isRust = status.toLowerCase() === "rust";
+
+  const color = isAan
+    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+    : isRust
+    ? "bg-yellow-50 text-yellow-700 border-yellow-200"
+    : "bg-slate-50 text-slate-500 border-slate-200";
+
   return (
-    <span className={clsx("inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold border", isAan ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-slate-50 text-slate-500 border-slate-200")}>
+    <span className={clsx("inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold border", color)}>
       {status}
     </span>
   );
@@ -41,14 +48,28 @@ function StatCard({ label, value }: { label: string; value: string | number }) {
   );
 }
 
+// --- DASHBOARD ---
 export default function DashboardPage() {
   const router = useRouter();
   const [pompen, setPompen] = useState<Pomp[]>([]);
   const [statusText, setStatusText] = useState("Verbinden met MQTT...");
   const [q, setQ] = useState("");
 
+  // --- INITIAL LOAD + MQTT ---
   useEffect(() => {
-    // 1. Verbinding maken
+    // 1️⃣ Fetch pompen uit DB
+    async function fetchPompen() {
+      try {
+        const res = await fetch("/api/pompen");
+        const data: Pomp[] = await res.json();
+        setPompen(data.map(p => ({ ...p, uniqueId: `${p.woning}_${p.id}` })));
+      } catch (err) {
+        console.error("Fout bij laden pompen:", err);
+      }
+    }
+    fetchPompen();
+
+    // 2️⃣ MQTT verbinding
     const client = mqtt.connect(MQTT_BROKER, {
       username: MQTT_USER,
       password: MQTT_PASS,
@@ -58,32 +79,34 @@ export default function DashboardPage() {
     client.on("connect", () => {
       setStatusText("Live verbonden");
       console.log("MQTT Verbonden!");
-      client.subscribe("asvz/+/+/+");
+      client.subscribe("asvz/+/+/+"); // Alle woningen/pompen
     });
 
-    // 2. Hier lossen we de TypeScript fouten op door types toe te voegen (: string, : Buffer)
-    client.on("message", (topic: string, message: Buffer) => {
-      const parts = topic.split("/");
-      const woningId = parts[1];
-      const pompId = parts[2];
-      const type = parts[3];
+    client.on("message", async (topic: string, message: Buffer) => {
+      const [_, woningId, pompId, type] = topic.split("/");
+      if (type !== "status") return;
 
-      if (type === "status") {
-        const msgValue = message.toString();
-        const uniqueId = `${woningId}_${pompId}`;
+      const statusMsg = message.toString();
+      const uniqueId = `${woningId}_${pompId}`;
 
-        setPompen((prev) => {
-          const bestaat = prev.find((p) => p.uniqueId === uniqueId);
-          if (bestaat) {
-            return prev.map((p) => p.uniqueId === uniqueId ? { ...p, status: msgValue } : p);
-          } else {
-            return [...prev, { uniqueId, id: pompId, woning: woningId, status: msgValue }];
-          }
-        });
-      }
+      // Update in frontend
+      setPompen(prev => {
+        const exists = prev.find(p => p.uniqueId === uniqueId);
+        if (exists) {
+          return prev.map(p => p.uniqueId === uniqueId ? { ...p, status: statusMsg } : p);
+        } else {
+          return [...prev, { uniqueId, id: pompId, woning: woningId, status: statusMsg }];
+        }
+      });
+
+      // Update in database
+      await fetch("/api/pompen/status", {
+        method: "POST",
+        body: JSON.stringify({ pomp_id: pompId, woning: woningId, status: statusMsg }),
+        headers: { "Content-Type": "application/json" }
+      });
     });
 
-    // Type Error toegevoegd
     client.on("error", (err: Error) => {
       console.error("MQTT Fout:", err);
       setStatusText("Verbinding mislukt");
@@ -93,7 +116,6 @@ export default function DashboardPage() {
   }, []);
 
   const logout = async () => {
-    // Zorg dat je /api/logout endpoint bestaat, anders geeft dit een 404
     try {
       await fetch("/api/logout", { method: "POST" });
     } catch (e) {
@@ -106,14 +128,15 @@ export default function DashboardPage() {
   const filteredPompen = useMemo(() => {
     const s = q.trim().toLowerCase();
     if (!s) return pompen;
-    return pompen.filter((p) => p.woning.includes(s) || p.id.includes(s));
+    return pompen.filter(p => p.woning.includes(s) || p.id.includes(s));
   }, [pompen, q]);
 
   const stats = useMemo(() => {
     const totaal = pompen.length;
-    const aan = pompen.filter((p) => p.status.toLowerCase() === "aan").length;
-    const uit = totaal - aan;
-    return { totaal, aan, uit };
+    const actief = pompen.filter(p => p.status.toLowerCase() === "actief").length;
+    const rust = pompen.filter(p => p.status.toLowerCase() === "rust").length;
+    const inactief = totaal - actief - rust;
+    return { totaal, actief, rust, inactief };
   }, [pompen]);
 
   return (
@@ -121,7 +144,6 @@ export default function DashboardPage() {
       <header className="sticky top-0 z-20 bg-white/90 border-b border-slate-200 backdrop-blur">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            {/* Zorg dat logo.svg in je public map staat */}
             <img src="/logo.svg" alt="ASVZ Logo" className="w-10 h-10 object-contain" />
             <div>
               <h1 className="text-lg font-semibold text-slate-900">Sonde Dashboard</h1>
@@ -145,15 +167,21 @@ export default function DashboardPage() {
         </aside>
 
         <section className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
             <StatCard label="Gevonden Pompen" value={stats.totaal} />
-            <StatCard label="Nu Actief" value={stats.aan} />
-            <StatCard label="In Rust" value={stats.uit} />
+            <StatCard label="Actief" value={stats.actief} />
+            <StatCard label="Rust" value={stats.rust} />
+            <StatCard label="Inactief" value={stats.inactief} />
           </div>
 
           <div className="rounded-3xl bg-white border border-slate-200 shadow-sm">
             <div className="p-5 border-b border-slate-200">
-              <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Zoek op woning of pomp..." className="w-full md:w-64 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-[#E5007D]" />
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Zoek op woning of pomp..."
+                className="w-full md:w-64 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-[#E5007D]"
+              />
             </div>
 
             <div className="p-5 overflow-x-auto">
