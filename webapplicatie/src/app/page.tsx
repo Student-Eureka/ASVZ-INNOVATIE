@@ -17,7 +17,7 @@ const MQTT_BROKER = "ws://10.1.1.237:9001";
 const MQTT_USER = "admin_user";
 const MQTT_PASS = "admin1"; 
 
-// --- COMPONENTS ---
+// --- HELPERS ---
 function clsx(...c: Array<string | false | null | undefined>) {
   return c.filter(Boolean).join(" ");
 }
@@ -57,16 +57,29 @@ export default function DashboardPage() {
 
   // --- INITIAL LOAD + MQTT ---
   useEffect(() => {
-    // 1️⃣ Fetch pompen uit DB
+    // 1️⃣ Fetch pompen uit API
     async function fetchPompen() {
       try {
         const res = await fetch("/api/pompen");
-        const data: Pomp[] = await res.json();
-        setPompen(data.map(p => ({ ...p, uniqueId: `${p.woning}_${p.id}` })));
+        const data = await res.json();
+
+        if (!Array.isArray(data)) {
+          console.error("Pompen API returned not an array:", data);
+          setPompen([]); // fallback
+          return;
+        }
+
+        setPompen(data.map(p => ({
+          ...p,
+          uniqueId: `${p.woning}_${p.id}`,
+          status: p.status || "inactief" // fallback
+        })));
       } catch (err) {
         console.error("Fout bij laden pompen:", err);
+        setPompen([]); // fallback
       }
     }
+
     fetchPompen();
 
     // 2️⃣ MQTT verbinding
@@ -79,7 +92,7 @@ export default function DashboardPage() {
     client.on("connect", () => {
       setStatusText("Live verbonden");
       console.log("MQTT Verbonden!");
-      client.subscribe("asvz/+/+/+"); // Alle woningen/pompen
+      client.subscribe("asvz/+/+/+"); // alle woningen/pompen
     });
 
     client.on("message", async (topic: string, message: Buffer) => {
@@ -89,7 +102,7 @@ export default function DashboardPage() {
       const statusMsg = message.toString();
       const uniqueId = `${woningId}_${pompId}`;
 
-      // Update in frontend
+      // Update frontend
       setPompen(prev => {
         const exists = prev.find(p => p.uniqueId === uniqueId);
         if (exists) {
@@ -99,12 +112,16 @@ export default function DashboardPage() {
         }
       });
 
-      // Update in database
-      await fetch("/api/pompen/status", {
-        method: "POST",
-        body: JSON.stringify({ pomp_id: pompId, woning: woningId, status: statusMsg }),
-        headers: { "Content-Type": "application/json" }
-      });
+      // Update database
+      try {
+        await fetch("/api/pompen/status", {
+          method: "POST",
+          body: JSON.stringify({ pomp_id: pompId, woning: woningId, status: statusMsg }),
+          headers: { "Content-Type": "application/json" }
+        });
+      } catch (err) {
+        console.error("Fout bij posten status:", err);
+      }
     });
 
     client.on("error", (err: Error) => {
@@ -128,7 +145,7 @@ export default function DashboardPage() {
   const filteredPompen = useMemo(() => {
     const s = q.trim().toLowerCase();
     if (!s) return pompen;
-    return pompen.filter(p => p.woning.includes(s) || p.id.includes(s));
+    return pompen.filter(p => p.woning.toLowerCase().includes(s) || p.id.toLowerCase().includes(s));
   }, [pompen, q]);
 
   const stats = useMemo(() => {
