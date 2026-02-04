@@ -13,9 +13,10 @@ interface Pomp {
 }
 
 // --- CONFIGURATIE ---
-const MQTT_BROKER = "ws://10.1.1.237:9001"; 
+const MQTT_BROKER = "ws://10.1.1.237:1883"; 
 const MQTT_USER = "admin_user";
-const MQTT_PASS = "admin1"; 
+const MQTT_PASS = "EurekaAdmin1!";
+
 
 // --- HELPERS ---
 function clsx(...c: Array<string | false | null | undefined>) {
@@ -83,16 +84,37 @@ export default function DashboardPage() {
     fetchPompen();
 
     // 2️⃣ MQTT verbinding
-    const client = mqtt.connect(MQTT_BROKER, {
-      username: MQTT_USER,
-      password: MQTT_PASS,
-      clientId: `dash_${Math.random().toString(16).slice(3)}`,
-    });
+    const client = mqtt.connect("mqtt://10.1.1.237:9001", {  // TCP in plaats van WS
+    username: MQTT_USER,
+    password: MQTT_PASS,
+    clientId: `dash_${Math.random().toString(16).slice(3)}`,
+    reconnectPeriod: 5000, // probeer elke 5 seconden opnieuw bij disconnect
+  });
 
     client.on("connect", () => {
       setStatusText("Live verbonden");
       console.log("MQTT Verbonden!");
       client.subscribe("asvz/+/+/+"); // alle woningen/pompen
+    });
+
+    client.on("reconnect", () => {
+      console.log("MQTT probeert opnieuw te verbinden...");
+      setStatusText("Verbinding opnieuw...");
+    });
+
+    client.on("close", () => {
+      console.log("MQTT verbinding gesloten");
+      setStatusText("Verbinding gesloten");
+    });
+
+    client.on("offline", () => {
+      console.log("MQTT offline");
+      setStatusText("Client offline");
+    });
+
+    client.on("error", (err) => {
+      console.error("MQTT Fout:", err);
+      setStatusText("Verbinding mislukt");
     });
 
     client.on("message", async (topic: string, message: Buffer) => {
@@ -102,7 +124,6 @@ export default function DashboardPage() {
       const statusMsg = message.toString();
       const uniqueId = `${woningId}_${pompId}`;
 
-      // Update frontend
       setPompen(prev => {
         const exists = prev.find(p => p.uniqueId === uniqueId);
         if (exists) {
@@ -112,7 +133,6 @@ export default function DashboardPage() {
         }
       });
 
-      // Update database
       try {
         await fetch("/api/pompen/status", {
           method: "POST",
@@ -123,6 +143,7 @@ export default function DashboardPage() {
         console.error("Fout bij posten status:", err);
       }
     });
+
 
     client.on("error", (err: Error) => {
       console.error("MQTT Fout:", err);
