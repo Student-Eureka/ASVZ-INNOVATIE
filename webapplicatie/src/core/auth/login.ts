@@ -1,6 +1,8 @@
-﻿import { db } from '@/../lib/db';
-import bcrypt from 'bcrypt';
+﻿import bcrypt from 'bcrypt';
 import crypto from 'crypto';
+
+import { createSession } from '@/infra/sessionRepo';
+import { getUserForLogin } from '@/infra/userRepo';
 
 interface LoginResult {
   success: boolean;
@@ -10,6 +12,8 @@ interface LoginResult {
   maxAgeSeconds?: number;
 }
 
+const SESSION_MAX_AGE_SECONDS = 60 * 60 * 8;
+
 export async function loginWithPassword(
   gebruikersnaam: string,
   wachtwoord: string
@@ -18,11 +22,7 @@ export async function loginWithPassword(
     return { success: false, status: 400, message: 'Ongeldige input' };
   }
 
-  const [rows]: any = await db.query(
-    'SELECT woning_id, wachtwoord, rol FROM woningen WHERE gebruikersnaam = ?',
-    [gebruikersnaam]
-  );
-
+  const rows = await getUserForLogin(gebruikersnaam);
   if (rows.length === 0) {
     return { success: false, status: 401, message: 'Ongeldige login' };
   }
@@ -35,13 +35,9 @@ export async function loginWithPassword(
   }
 
   const token = crypto.randomUUID();
-  const maxAgeSeconds = 60 * 60 * 8;
-  const expires = new Date(Date.now() + 1000 * maxAgeSeconds);
+  const expires = new Date(Date.now() + 1000 * SESSION_MAX_AGE_SECONDS);
 
-  await db.query(
-    'INSERT INTO sessions (id, user_id, expires_at) VALUES (?, ?, ?)',
-    [token, user.woning_id, expires]
-  );
+  await createSession(user.woning_id, expires, token);
 
-  return { success: true, status: 200, token, maxAgeSeconds };
+  return { success: true, status: 200, token, maxAgeSeconds: SESSION_MAX_AGE_SECONDS };
 }

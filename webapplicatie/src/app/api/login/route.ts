@@ -1,7 +1,7 @@
 ﻿import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-import { loginWithPassword } from './_services/login';
+import { loginWithPassword } from '@/core/auth/login';
 
 export async function POST(req: NextRequest) {
   try {

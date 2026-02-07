@@ -1,7 +1,7 @@
 ﻿import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-import { logoutSession } from './_services/logout';
+import { logoutSession } from '@/core/auth/logout';
 
 export async function POST(req: NextRequest) {
   const token = req.cookies.get('session')?.value ?? null;

@@ -1,15 +1,13 @@
 ﻿import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-import { requireAdmin } from '@/../lib/auth';
-import { createUser } from './_services/createUser';
-import { deleteUser } from './_services/deleteUser';
-import { getUsers } from './_services/getUsers';
-import { updateUser } from './_services/updateUser';
+import { requireAdminByToken } from '@/core/auth/session';
+import { createUser, deleteUser, getUsers, updateUser } from '@/core/users/users';
 
 export async function GET(req: NextRequest) {
   try {
-    await requireAdmin(req);
+    const token = req.cookies.get('session')?.value ?? null;
+    await requireAdminByToken(token);
     const rows = await getUsers();
     return NextResponse.json(rows);
   } catch (err: any) {
@@ -19,7 +17,8 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    await requireAdmin(req);
+    const token = req.cookies.get('session')?.value ?? null;
+    await requireAdminByToken(token);
     const payload = await req.json();
     const result = await createUser(payload);
     if (!result.success) {
@@ -33,7 +32,8 @@ export async function POST(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
-    await requireAdmin(req);
+    const token = req.cookies.get('session')?.value ?? null;
+    await requireAdminByToken(token);
     const payload = await req.json();
     const result = await deleteUser(payload);
     if (!result.success) {
@@ -47,7 +47,8 @@ export async function DELETE(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   try {
-    await requireAdmin(req);
+    const token = req.cookies.get('session')?.value ?? null;
+    await requireAdminByToken(token);
     const payload = await req.json();
     const result = await updateUser(payload);
     if (!result.success) {

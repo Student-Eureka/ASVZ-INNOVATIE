@@ -7,7 +7,7 @@ export const TOPICS: Topic[] = [
   { id: 'pomp', titel: 'Pompscherm', subtitel: 'Scherm 4' },
   { id: 'logboek', titel: 'Status & logboek', subtitel: 'Scherm 5' },
   { id: 'waarom', titel: 'Waarom deze uitleg?', subtitel: '' },
-  { id: 'hoe', titel: 'Hoe deze uitleg?', subtitel: '' },
+  { id: 'architectuur', titel: 'Architectuur', subtitel: 'Overzicht' },
 ];
 
 export function getContent(id: TopicId): ContentBlock | null {
@@ -128,19 +128,20 @@ export function getContent(id: TopicId): ContentBlock | null {
           </>
         ),
       };
-    case 'hoe':
+    case 'architectuur':
       return {
-        title: 'HOE deze uitleg?',
+        title: 'Architectuur (huidige stand)',
         body: (
           <>
             <p className="text-sm text-slate-600 mb-2">
-              Deze ingebouwde uitleg is bedoeld voor gebruikers die minder
-              ervaring hebben met de sondepomp of met digitale dashboards.
+              De applicatie is opgebouwd in vier lagen: <span className="font-semibold">Frontend</span>,
+              <span className="font-semibold"> API</span>, <span className="font-semibold">Core</span> en
+              <span className="font-semibold"> Infra</span>. Een laag mag alleen de laag eronder kennen.
             </p>
             <p className="text-sm text-slate-600">
-              Doordat de uitleg in de applicatie zelf zit, hoeft u geen papieren
-              handleiding op te zoeken. Dit maakt het werken veiliger en
-              overzichtelijker, ook in drukke situaties.
+              MQTT draait server-side en levert data via de API. Database‑logica
+              zit in de infra‑laag, business logic in core. Zo blijft de UI schoon
+              en het systeem uitbreidbaar.
             </p>
           </>
         ),

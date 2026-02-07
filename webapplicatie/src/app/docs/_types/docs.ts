@@ -1,6 +1,13 @@
 ﻿import type { ReactNode } from 'react';
 
-export type TopicId = 'login' | 'dashboard' | 'select-pomp' | 'pomp' | 'logboek' | 'waarom' | 'hoe';
+export type TopicId =
+  | 'login'
+  | 'dashboard'
+  | 'select-pomp'
+  | 'pomp'
+  | 'logboek'
+  | 'waarom'
+  | 'architectuur';
 
 export interface Topic {
   id: TopicId;
