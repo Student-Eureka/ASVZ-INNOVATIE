@@ -1,7 +1,5 @@
-import Image from "next/image";
+﻿import StatusboekContent from './_components/StatusboekContent';
 
-export default function Home() {
-  return (
-    <h1>Statusboek page</h1>
-  );
+export default function StatusboekPage() {
+  return <StatusboekContent />;
 }

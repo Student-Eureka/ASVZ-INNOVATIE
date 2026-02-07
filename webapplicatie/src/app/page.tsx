@@ -13,7 +13,7 @@ interface Pomp {
 }
 
 // --- CONFIGURATIE ---
-const MQTT_BROKER = "ws://10.1.1.237:1883"; 
+const MQTT_BROKER = "ws://10.1.1.237:9001"; 
 const MQTT_USER = "admin_user";
 const MQTT_PASS = "EurekaAdmin1!";
 
@@ -84,7 +84,7 @@ export default function DashboardPage() {
     fetchPompen();
 
     // 2️⃣ MQTT verbinding
-    const client = mqtt.connect("mqtt://10.1.1.237:9001", {  // TCP in plaats van WS
+    const client = mqtt.connect(MQTT_BROKER, {  // TCP in plaats van WS
     username: MQTT_USER,
     password: MQTT_PASS,
     clientId: `dash_${Math.random().toString(16).slice(3)}`,
