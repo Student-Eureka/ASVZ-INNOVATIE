@@ -18,6 +18,7 @@ export default function PompDetailPage() {
 
   const [isSnoozed, setIsSnoozed] = useState(false);
   const [snoozeTime, setSnoozeTime] = useState(0);
+  const [servoLoading, setServoLoading] = useState(false);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -34,6 +35,24 @@ export default function PompDetailPage() {
   const handleSnooze = () => {
     setIsSnoozed(true);
     setSnoozeTime(300);
+  };
+
+  const triggerServo = async () => {
+    setServoLoading(true);
+    try {
+      const res = await fetch('/api/servo', { method: 'POST' });
+      const data = await res.json();
+
+      if (res.ok) {
+        alert(`✅ ${data.message}`);
+      } else {
+        alert(`❌ Fout: ${data.error}`);
+      }
+    } catch (error) {
+      console.error(error);
+      alert('❌ Kan API niet bereiken. Check of de server draait.');
+    }
+    setServoLoading(false);
   };
 
   const formatTime = (seconds: number) => {
@@ -60,7 +79,7 @@ export default function PompDetailPage() {
         />
 
         <div className="flex-1 p-6 md:p-10 overflow-y-auto bg-[#F8F9FA]">
-          <PumpStats data={pumpData} />
+          <PumpStats data={pumpData} onServoTest={triggerServo} servoLoading={servoLoading} />
           <PumpHistory items={pumpData.history} />
         </div>
       </div>

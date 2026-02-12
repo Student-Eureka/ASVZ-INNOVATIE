@@ -1,8 +1,9 @@
-﻿import { Activity, Battery, Droplets, Thermometer, Wifi } from 'lucide-react';
+﻿import type { ReactNode } from 'react';
+import { Activity, Battery, Droplets, PlayCircle, Thermometer, Wifi } from 'lucide-react';
 import type { PumpData } from '../_types/pomp';
 
 interface StatBoxProps {
-  icon: React.ReactNode;
+  icon: ReactNode;
   label: string;
   value: string;
   subLabel?: string;
@@ -33,14 +34,30 @@ function StatBox({ icon, label, value, subLabel, subColor, progress }: StatBoxPr
 
 interface PumpStatsProps {
   data: PumpData;
+  onServoTest: () => void;
+  servoLoading: boolean;
 }
 
-export default function PumpStats({ data }: PumpStatsProps) {
+export default function PumpStats({ data, onServoTest, servoLoading }: PumpStatsProps) {
   return (
     <>
-      <h3 className="text-gray-800 font-bold text-lg mb-4 flex items-center gap-2">
-        <Activity size={18} className="text-[#E30059]" /> Live Gegevens
-      </h3>
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-gray-800 font-bold text-lg flex items-center gap-2">
+          <Activity size={18} className="text-[#E30059]" /> Live Gegevens
+        </h3>
+        <button
+          onClick={onServoTest}
+          disabled={servoLoading}
+          className="bg-white border-2 border-[#E30059] text-[#E30059] hover:bg-[#E30059] hover:text-white px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-2 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {servoLoading ? (
+            <span className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full"></span>
+          ) : (
+            <PlayCircle size={16} />
+          )}
+          Test Servo
+        </button>
+      </div>
 
       <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatBox
