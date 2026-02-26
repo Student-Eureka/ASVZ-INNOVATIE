@@ -1,10 +1,9 @@
-﻿import AppSidebar from '../_components/AppSidebar';
+﻿'use client';
+import AppSidebar from '../_components/AppSidebar';
 import TopicGrid from './_components/TopicGrid';
 import TopicModal from './_components/TopicModal';
 import { getContent, TOPICS } from './_data/topics';
 import type { TopicId } from './_types/docs';
-
-'use client';
 
 import { useState } from 'react';
 
