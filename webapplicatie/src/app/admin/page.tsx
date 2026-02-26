@@ -2,8 +2,9 @@
 
 import { useEffect, useMemo, useState } from 'react';
 
+import AppSidebar from '../_components/AppSidebar';
 import AddUserModal from './_components/AddUserModal';
-import AdminSidebar from './_components/AdminSidebar';
+import AdminNav from './_components/AdminNav';
 import StatCard from './_components/StatCard';
 import UsersSection from './_components/UsersSection';
 import type { NavId, Role, UserRow } from './_types/admin';
@@ -106,7 +107,11 @@ export default function AdminPanelPage() {
       </header>
 
       <div className="max-w-6xl mx-auto px-6 py-6 grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
-        <AdminSidebar nav={nav} onSelect={setNav} />
+        <div className="hidden lg:block">
+          <AppSidebar>
+            <AdminNav nav={nav} onSelect={setNav} />
+          </AppSidebar>
+        </div>
 
         <section className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">

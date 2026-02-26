@@ -3,10 +3,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 
+import AppSidebar from '../../_components/AppSidebar';
 import PumpHeader from './_components/PumpHeader';
 import PumpHistory from './_components/PumpHistory';
 import PumpStats from './_components/PumpStats';
 import PumpStatusPanel from './_components/PumpStatusPanel';
+import PompenSideExtras from '../_components/PompenSideExtras';
 import { createPumpData } from './_data/pumpData';
 
 export default function PompDetailPage() {
@@ -69,18 +71,26 @@ export default function PompDetailPage() {
         onBack={() => router.back()}
       />
 
-      <div className="flex-1 bg-[#F8F9FA] rounded-t-[30px] md:rounded-t-[40px] shadow-[0_-10px_40px_rgba(0,0,0,0.2)] overflow-hidden flex flex-col md:flex-row relative">
-        <PumpStatusPanel
-          data={pumpData}
-          isSnoozed={isSnoozed}
-          snoozeTime={snoozeTime}
-          onSnooze={handleSnooze}
-          formatTime={formatTime}
-        />
+      <div className="flex-1 px-0 md:px-8 pb-0 md:pb-8 flex flex-col md:flex-row gap-0 md:gap-8 overflow-hidden">
+        <div className="hidden md:block w-64 shrink-0 py-2">
+          <AppSidebar>
+            <PompenSideExtras />
+          </AppSidebar>
+        </div>
 
-        <div className="flex-1 p-6 md:p-10 overflow-y-auto bg-[#F8F9FA]">
-          <PumpStats data={pumpData} onServoTest={triggerServo} servoLoading={servoLoading} />
-          <PumpHistory items={pumpData.history} />
+        <div className="flex-1 bg-[#F8F9FA] rounded-t-[30px] md:rounded-t-[40px] shadow-[0_-10px_40px_rgba(0,0,0,0.2)] overflow-hidden flex flex-col md:flex-row relative">
+          <PumpStatusPanel
+            data={pumpData}
+            isSnoozed={isSnoozed}
+            snoozeTime={snoozeTime}
+            onSnooze={handleSnooze}
+            formatTime={formatTime}
+          />
+
+          <div className="flex-1 p-6 md:p-10 overflow-y-auto bg-[#F8F9FA]">
+            <PumpStats data={pumpData} onServoTest={triggerServo} servoLoading={servoLoading} />
+            <PumpHistory items={pumpData.history} />
+          </div>
         </div>
       </div>
     </div>

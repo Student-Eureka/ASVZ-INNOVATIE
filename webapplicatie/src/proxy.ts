@@ -6,7 +6,7 @@ export function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
   // Protected routes
-  const protectedPaths = ["/docs",   "/statusboek"];
+  const protectedPaths = ["/docs"];
   const isProtected = protectedPaths.some(
     (p) => path === p || path.startsWith(p + "/")
   );

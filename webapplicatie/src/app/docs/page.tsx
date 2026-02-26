@@ -1,11 +1,12 @@
-﻿'use client';
-
-import { useState } from 'react';
-
-import { getContent, TOPICS } from './_data/topics';
+﻿import AppSidebar from '../_components/AppSidebar';
 import TopicGrid from './_components/TopicGrid';
 import TopicModal from './_components/TopicModal';
+import { getContent, TOPICS } from './_data/topics';
 import type { TopicId } from './_types/docs';
+
+'use client';
+
+import { useState } from 'react';
 
 export default function DocumentatiePage() {
   const [activeId, setActiveId] = useState<TopicId | null>(null);
@@ -35,8 +36,13 @@ export default function DocumentatiePage() {
       </header>
 
       <div className="flex-1">
-        <div className="max-w-5xl mx-auto px-6 py-8">
-          <TopicGrid topics={TOPICS} onSelect={setActiveId} />
+        <div className="max-w-6xl mx-auto px-6 py-8 grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
+          <div className="hidden lg:block">
+            <AppSidebar />
+          </div>
+          <div>
+            <TopicGrid topics={TOPICS} onSelect={setActiveId} />
+          </div>
         </div>
       </div>
 

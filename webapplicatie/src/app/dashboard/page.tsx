@@ -3,9 +3,9 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 
+import AppSidebar from '../_components/AppSidebar';
 import DashboardContent from './_components/DashboardContent';
 import DashboardHeader from './_components/DashboardHeader';
-import DashboardSidebar from './_components/DashboardSidebar';
 import type { Pomp } from './_types/dashboard';
 
 export default function DashboardPage() {
@@ -84,7 +84,9 @@ export default function DashboardPage() {
       <DashboardHeader statusText={statusText} onLogout={logout} />
 
       <div className="max-w-6xl mx-auto px-6 py-6 grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
-        <DashboardSidebar onAdmin={() => router.push('/admin')} />
+        <div className="hidden lg:block">
+          <AppSidebar />
+        </div>
         <DashboardContent
           pompen={filteredPompen}
           query={q}

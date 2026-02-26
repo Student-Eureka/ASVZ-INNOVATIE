@@ -3,10 +3,11 @@
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+import AppSidebar from '../_components/AppSidebar';
 import PompenHeader from './_components/PompenHeader';
 import PompenList from './_components/PompenList';
 import PompenSearch from './_components/PompenSearch';
-import PompenSidebar from './_components/PompenSidebar';
+import PompenSideExtras from './_components/PompenSideExtras';
 import { POMPEN } from './_data/pompen';
 
 export default function PompenOverzichtPage() {
@@ -27,7 +28,11 @@ export default function PompenOverzichtPage() {
       <PompenHeader />
 
       <div className="flex-1 px-0 md:px-8 pb-0 md:pb-8 flex flex-col md:flex-row gap-0 md:gap-8 overflow-hidden">
-        <PompenSidebar />
+        <div className="hidden md:block w-64 shrink-0 py-2">
+          <AppSidebar>
+            <PompenSideExtras />
+          </AppSidebar>
+        </div>
 
         <div className="flex-1 flex flex-col gap-4 md:gap-6 overflow-hidden bg-[#F8F9FA] rounded-t-3xl md:rounded-[40px] shadow-2xl p-4 md:p-8 relative">
           <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4 pb-2">
