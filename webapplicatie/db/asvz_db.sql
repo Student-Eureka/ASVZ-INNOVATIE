@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Gegenereerd op: 14 jan 2026 om 17:52
+-- Gegenereerd op: 27 feb 2026 om 09:28
 -- Serverversie: 10.4.32-MariaDB
 -- PHP-versie: 8.2.12
 
@@ -18,7 +18,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `woningen_db`
+-- Database: `asvz_db`
 --
 
 -- --------------------------------------------------------
@@ -29,10 +29,9 @@ SET time_zone = "+00:00";
 
 CREATE TABLE `pompen` (
   `id` int(11) NOT NULL,
-  `pomp_id` varchar(64) NOT NULL,
-  `woning` varchar(64) NOT NULL,
+  `woning_id` int(11) NOT NULL,
   `status` enum('Inactief','Rust','Actief') DEFAULT 'Inactief',
-  `laatste_update` datetime DEFAULT current_timestamp()
+  `laatste_update` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -42,10 +41,10 @@ CREATE TABLE `pompen` (
 --
 
 CREATE TABLE `sessions` (
-  `id` varchar(64) NOT NULL,
+  `id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
   `expires_at` datetime NOT NULL,
-  `created_at` datetime NOT NULL DEFAULT current_timestamp()
+  `created_at` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -53,7 +52,7 @@ CREATE TABLE `sessions` (
 --
 
 INSERT INTO `sessions` (`id`, `user_id`, `expires_at`, `created_at`) VALUES
-('c630571a-d068-4977-9141-8f979812fb41', 1, '2026-01-13 23:49:38', '2026-01-13 15:49:38');
+(62, 5, '2026-02-26 22:41:29', '2026-02-26 14:41:29');
 
 -- --------------------------------------------------------
 
@@ -73,8 +72,8 @@ CREATE TABLE `woningen` (
 --
 
 INSERT INTO `woningen` (`woning_id`, `gebruikersnaam`, `wachtwoord`, `rol`) VALUES
-(1, 'root', '$2b$12$uVPqRrdAPe7wMBXyp9qOXuSw8TRj/84KzXJgPZUoogFrNOoT27S2C', 'admin'),
-(2, 'test', '$2b$12$/j34znw8Zn987vcX78WEZuuU1IEnY3hQZPVv3UfE2lsrP9yu3k4LO', 'user');
+(4, 'root', '$2b$12$rdRHayrRSdsdwlQ9gCzaxukf2AcXia9w5ZXyjU3MKK1jN/230zDyy', 'admin'),
+(5, 'test', '$2b$12$eF/ileULWIl35QpZKVr6Q.5nzViXZ1U17KI/ZjUZl8MuOLCB6laCO', 'user');
 
 --
 -- Indexen voor geëxporteerde tabellen
@@ -85,13 +84,14 @@ INSERT INTO `woningen` (`woning_id`, `gebruikersnaam`, `wachtwoord`, `rol`) VALU
 --
 ALTER TABLE `pompen`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `uniq_pomp_woning` (`pomp_id`,`woning`);
+  ADD KEY `fk_pompen_woningen` (`woning_id`);
 
 --
 -- Indexen voor tabel `sessions`
 --
 ALTER TABLE `sessions`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `fk_sessions_woningen` (`user_id`);
 
 --
 -- Indexen voor tabel `woningen`
@@ -108,13 +108,35 @@ ALTER TABLE `woningen`
 -- AUTO_INCREMENT voor een tabel `pompen`
 --
 ALTER TABLE `pompen`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
+-- AUTO_INCREMENT voor een tabel `sessions`
+--
+ALTER TABLE `sessions`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=64658424;
 
 --
 -- AUTO_INCREMENT voor een tabel `woningen`
 --
 ALTER TABLE `woningen`
-  MODIFY `woning_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `woning_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+
+--
+-- Beperkingen voor geëxporteerde tabellen
+--
+
+--
+-- Beperkingen voor tabel `pompen`
+--
+ALTER TABLE `pompen`
+  ADD CONSTRAINT `fk_pompen_woningen` FOREIGN KEY (`woning_id`) REFERENCES `woningen` (`woning_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Beperkingen voor tabel `sessions`
+--
+ALTER TABLE `sessions`
+  ADD CONSTRAINT `fk_sessions_woningen` FOREIGN KEY (`user_id`) REFERENCES `woningen` (`woning_id`) ON DELETE CASCADE ON UPDATE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
