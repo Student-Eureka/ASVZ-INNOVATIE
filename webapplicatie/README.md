@@ -2,6 +2,9 @@
 
 Deze map bevat de Next.js webapplicatie voor het Sondepomp Dashboard.
 
+- [Architecture](./Architecture.md)
+- [Project-Overdracht](./Project-Overdracht.md)
+
 ## Quick start / lokale run
 
 1. Installeer dependencies:
