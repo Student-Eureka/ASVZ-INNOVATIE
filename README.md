@@ -136,6 +136,30 @@ ASVZ_Innovatie/
 
 ---
 
+## Toekomstblik
+
+Ideeën voor mogelijke vervolgontwikkeling (voor toekomstige stagiairs of teams):
+
+- **Docker + Docker Compose**: het idee is om de volledige stack te draaien in een Docker omgeving. Op dit moment draait alles op een Linux server met PM2; frontend, backend, MQTT en database worden los beheerd. Dit kan vereenvoudigd worden door alles te bundelen in een `docker-compose.yml`, inclusief alle configuraties. Daarmee kun je de complete stack in 1 keer starten, consistent uitrollen en bij problemen eenvoudig op een andere machine opnieuw opstarten.
+
+  Een mogelijke herstructurering die hierbij past:
+
+```
+ASVZ-INNOVATIE/
+Frontend/
+Backend/
+Mqtt/
+Server/ (server scripts en documentatie)
+```
+
+  De database kan dan ook via Docker worden gedraaid.
+
+---
+
+- **PostgreSQL kan een logische upgrade zijn wanneer het datamodel complexer wordt (audit logging, rapportages, JSON-velden). Het biedt sterke data-betrouwbaarheid en krachtige query-mogelijkheden. Voor de huidige scope blijft MySQL voldoende en eenvoudiger in beheer.
+
+---
+
 ## Documentatie & Reproduceerbaarheid
 
 Deze repository bevat:
