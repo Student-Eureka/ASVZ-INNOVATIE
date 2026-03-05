@@ -1,36 +1,89 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+﻿# Webapplicatie – ASVZ Innovatie
 
-## Getting Started
+Deze map bevat de Next.js webapplicatie voor het Sondepomp Dashboard.
 
-First, run the development server:
+## Quick start / lokale run
+
+1. Installeer dependencies:
+
+```bash
+npm install
+```
+
+2. Maak een `.env` in `webapplicatie/` met de benodigde variabelen (zie `.env.example`).
+
+3. Start de dev‑server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+4. Open de app op `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Belangrijke documenten
+- `Architecture.md` – architectuur en laagregels
+- `Project-Overdracht.md` – volledige technische overdracht
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Architectuur in het kort
+De app is opgezet in 4 lagen:
 
-## Learn More
+```
+Frontend → API → Core → Infra
+```
 
-To learn more about Next.js, take a look at the following resources:
+- **Frontend (`src/app/`)**: UI en routing
+- **API (`src/app/api/`)**: dunne adapters
+- **Core (`src/core/`)**: business logic
+- **Infra (`src/infra/`)**: database/MQTT
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Mappenstructuur (relevant)
+```
+src/
+  app/
+    _components/
+    api/
+    dashboard/
+    login/
+    admin/
+    pompen/
+    statusboek/
+    docs/
+  core/
+    auth/
+    users/
+    servo/
+  infra/
+    db.ts
+    userRepo.ts
+    sessionRepo.ts
+    mqttClient.ts
+    mqttPublish.ts
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Configuratie (.env)
+Deze keys worden verwacht:
+```
+MQTT_BROKER_URL=
+MQTT_USER=
+MQTT_PASS=
 
-## Deploy on Vercel
+SERVO_MQTT_HOST=
+SERVO_MQTT_PORT=
+SERVO_MQTT_PROTOCOL=
+SERVO_MQTT_USER=
+SERVO_MQTT_PASS=
+SERVO_MQTT_REJECT_UNAUTHORIZED=
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Scripts
+```
+npm run dev
+npm run build
+npm run start
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Notities
+- MQTT draait server‑side; de frontend gebruikt alleen HTTP.
+- De API‑laag bevat geen DB‑queries; die zitten in `src/infra`.
+
+Voor details en open punten: zie `Project-Overdracht.md`.

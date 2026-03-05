@@ -1,7 +1,5 @@
 # Architecture - ASVZ Webapplicatie
 
-Laatst bijgewerkt: 9 februari 2026.
-
 ## Doel van dit document
 Dit document beschrijft de huidige architectuur van de applicatie.
 Het dient als:
