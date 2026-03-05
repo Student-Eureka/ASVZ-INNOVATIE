@@ -151,10 +151,6 @@ Links naar detaildocumentatie:
 - `webapplicatie/README.md` - Webapp setup, login flow, API
 - `webapplicatie/Project-Overdracht.md` - Technische overdracht (huidige stand)
 - `hardware/README.md` - Pinout, actuator, hardware code
-- `MQTT/README.md` - Topics, QoS, setup
-
----
-
-## Laatste opmerking
-
-Als iemand dit na het lezen nog niet begrijpt, ligt het probleem bij de uitleg of het systeem. Documentatie **is onderdeel van het product** en geen extraatje.
+- `mqtt/README.md` - Topics, QoS, setup
+- `mqtt/INSTALL_UBUNTU.md` - MQTT installatie op Ubuntu
+- `server/README.md` - Linux server setup (Ubuntu + PM2)

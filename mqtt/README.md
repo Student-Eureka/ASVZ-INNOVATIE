@@ -11,8 +11,8 @@ MQTT wordt gebruikt om:
 De broker is **Eclipse Mosquitto**.
 
 Belangrijk:
-- In Docker is de hostnaam **`mqtt`** (niet `localhost`).
-- Buiten Docker is dit het IP/DNS van de broker.
+- De broker draait op een **Ubuntu server** (geen Docker).
+- Gebruik het IP/DNS van de server als broker‑host.
 
 ## 3. Topics
 ### Status (device → server)
