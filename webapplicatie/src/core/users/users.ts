@@ -31,7 +31,7 @@ export async function createUser(payload: {
     return { success: false, status: 400, message: 'Ongeldige input' };
   }
 
-  const existing = await findExistingUser(cleanName, cleanEmail);
+  const existing = await findExistingUser(cleanName);
   if (existing.length > 0) {
     return { success: false, status: 400, message: 'Gebruiker bestaat al' };
   }
