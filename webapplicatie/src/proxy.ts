@@ -1,17 +1,18 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+// Deze functie beschermt routes en stuurt gebruikers door naar login als ze geen sessie hebben.
 export function proxy(request: NextRequest) {
   const session = request.cookies.get("session")?.value;
   const path = request.nextUrl.pathname;
 
-  // Protected routes
+  // Beschermt routes (alleen toegankelijk als je bent ingelogd)
   const protectedPaths = ["/docs"];
   const isProtected = protectedPaths.some(
     (p) => path === p || path.startsWith(p + "/")
   );
 
-  // ALTIJD loginpagina toestaan
+  // Loginpagina is altijd toegankelijk; als je al ingelogd bent ga je door naar home ( / redirect -> /dashboard ) 
   if (path === "/login") {
     if (session) {
       return NextResponse.redirect(new URL("/", request.url));
@@ -19,11 +20,11 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Redirect naar login als niet ingelogd is
+  // Geen sessie + beschermde route = doorsturen naar login page
   if (!session && isProtected) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // Alles verder gewoon doorgaan
+  // Alles oke -> doorgaan naar page
   return NextResponse.next();
 }
