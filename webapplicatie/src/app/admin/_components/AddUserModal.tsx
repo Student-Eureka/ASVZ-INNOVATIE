@@ -1,4 +1,4 @@
-﻿import type { Role } from '../_types/admin';
+import type { Role } from '../_types/admin';
 
 interface AddUserModalProps {
   onClose: () => void;
@@ -49,6 +49,10 @@ export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
               <option value="admin">admin</option>
             </select>
           </div>
+
+          <p className="text-xs text-slate-500">
+            De woning wordt automatisch overgenomen van het huidige account.
+          </p>
 
           <button className="w-full rounded-2xl bg-slate-900 text-white px-3 py-2 text-sm font-semibold hover:bg-slate-800">
             Opslaan
