@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-import { requireUserByToken } from '@/core/auth/session';
-
-import { getRegisteredPompEventsForWoning } from '../_services/pompen';
+import { requireAdminByToken } from '@/core/auth/session';
+import { getAuditLogForWoning } from '@/app/api/pompen/_services/pompen';
 
 function errorMessage(err: unknown) {
   return err instanceof Error && err.message ? err.message : 'Server error';
@@ -23,12 +22,12 @@ function errorStatus(err: unknown) {
 export async function GET(req: NextRequest) {
   try {
     const token = req.cookies.get('session')?.value ?? null;
-    const user = await requireUserByToken(token);
-    const data = await getRegisteredPompEventsForWoning(user.woning_code);
+    const user = await requireAdminByToken(token);
+    const data = await getAuditLogForWoning(user.woning_code);
     return NextResponse.json(data);
   } catch (err) {
     return NextResponse.json(
-      { status: 'error', message: errorMessage(err) },
+      { success: false, message: errorMessage(err) },
       { status: errorStatus(err) }
     );
   }

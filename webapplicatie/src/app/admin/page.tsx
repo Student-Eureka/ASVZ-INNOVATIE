@@ -6,30 +6,70 @@ import { useEffect, useMemo, useState } from 'react';
 import AppSidebar from '../_components/AppSidebar';
 import AddUserModal from './_components/AddUserModal';
 import AdminNav from './_components/AdminNav';
-import { DEFAULT_RULES } from './_data/rules';
+import AuditSection from './_components/AuditSection';
+import NewPumpsSection from './_components/NewPumpsSection';
 import StatCard from './_components/StatCard';
 import UsersSection from './_components/UsersSection';
-import type { NavId, Role, UserRow } from './_types/admin';
+import type { AuditRow, NavId, NewPumpRow, Role, UserRow } from './_types/admin';
 
 export default function AdminPanelPage() {
   const [nav, setNav] = useState<NavId>('users');
   const [q, setQ] = useState('');
   const [showAdd, setShowAdd] = useState(false);
   const [users, setUsers] = useState<UserRow[]>([]);
+  const [newPumps, setNewPumps] = useState<NewPumpRow[]>([]);
+  const [auditEntries, setAuditEntries] = useState<AuditRow[]>([]);
+  const [reloadKey, setReloadKey] = useState(0);
+  const [savingPompId, setSavingPompId] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchUsers() {
+    let active = true;
+
+    async function fetchAdminData() {
       try {
-        const res = await fetch('/api/users');
-        if (!res.ok) throw new Error('Kan gebruikers niet ophalen');
-        const data: UserRow[] = await res.json();
-        setUsers(data);
+        const [usersRes, newPumpsRes, auditRes] = await Promise.all([
+          fetch('/api/users', { cache: 'no-store' }),
+          fetch('/api/admin/pompen/new', { cache: 'no-store' }),
+          fetch('/api/admin/audit', { cache: 'no-store' }),
+        ]);
+
+        if (!usersRes.ok || !newPumpsRes.ok || !auditRes.ok) {
+          throw new Error('Kon admin data niet ophalen');
+        }
+
+        const [usersData, newPumpsData, auditData] = (await Promise.all([
+          usersRes.json(),
+          newPumpsRes.json(),
+          auditRes.json(),
+        ])) as [UserRow[], NewPumpRow[], AuditRow[]];
+
+        if (!active) {
+          return;
+        }
+
+        setUsers(Array.isArray(usersData) ? usersData : []);
+        setNewPumps(Array.isArray(newPumpsData) ? newPumpsData : []);
+        setAuditEntries(Array.isArray(auditData) ? auditData : []);
       } catch (err) {
         console.error(err);
+        if (!active) {
+          return;
+        }
+
+        setUsers([]);
+        setNewPumps([]);
+        setAuditEntries([]);
       }
     }
-    fetchUsers();
-  }, []);
+
+    fetchAdminData();
+    const interval = window.setInterval(fetchAdminData, 5000);
+
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+    };
+  }, [reloadKey]);
 
   async function saveUserRole(userId: string, role: Role) {
     try {
@@ -39,7 +79,7 @@ export default function AdminPanelPage() {
         headers: { 'Content-Type': 'application/json' },
       });
       if (!res.ok) throw new Error('Kon rol niet opslaan');
-      setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, role } : u)));
+      setReloadKey((value) => value + 1);
     } catch (err) {
       console.error(err);
     }
@@ -53,7 +93,7 @@ export default function AdminPanelPage() {
         headers: { 'Content-Type': 'application/json' },
       });
       if (!res.ok) throw new Error('Kon gebruiker niet verwijderen');
-      setUsers((prev) => prev.filter((u) => u.id !== userId));
+      setReloadKey((value) => value + 1);
     } catch (err) {
       console.error(err);
     }
@@ -67,11 +107,27 @@ export default function AdminPanelPage() {
         headers: { 'Content-Type': 'application/json' },
       });
       if (!res.ok) throw new Error('Kon gebruiker niet toevoegen');
-      const newUser = await res.json();
-      setUsers((prev) => [{ id: newUser.id, name, email, role, lastLogin: '—' }, ...prev]);
       setShowAdd(false);
+      setReloadKey((value) => value + 1);
     } catch (err) {
       console.error(err);
+    }
+  }
+
+  async function addPumpToDatabase(pompId: string) {
+    try {
+      setSavingPompId(pompId);
+      const res = await fetch('/api/admin/pompen/new', {
+        method: 'POST',
+        body: JSON.stringify({ pompId }),
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (!res.ok) throw new Error('Kon pomp niet toevoegen');
+      setReloadKey((value) => value + 1);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSavingPompId(null);
     }
   }
 
@@ -79,16 +135,23 @@ export default function AdminPanelPage() {
     const s = q.trim().toLowerCase();
     if (!s) return users;
     return users.filter((u) =>
-      [u.name, u.email, u.role].some((x) => (x || '').toLowerCase().includes(s))
+      [u.name, u.email, u.role, u.woningCode].some((x) => (x || '').toLowerCase().includes(s))
     );
   }, [users, q]);
 
+  const tenantLabel = useMemo(() => {
+    return users[0]?.woningCode ?? newPumps[0]?.woning ?? auditEntries[0]?.woning ?? '';
+  }, [auditEntries, newPumps, users]);
+
   const stats = useMemo(() => {
     const admins = users.filter((u) => u.role === 'admin').length;
-    const normal = users.length - admins;
-    const lockedForUser = DEFAULT_RULES.filter((r) => !r.userCan).length;
-    return { admins, normal, lockedForUser };
-  }, [users]);
+    return {
+      accounts: users.length,
+      admins,
+      newPumps: newPumps.length,
+      auditRows: auditEntries.length,
+    };
+  }, [auditEntries.length, newPumps.length, users]);
 
   return (
     <main className="min-h-screen bg-[#E5007D]">
@@ -98,9 +161,17 @@ export default function AdminPanelPage() {
             <Image src="/logo.svg" alt="ASVZ logo" width={36} height={36} className="w-9 h-9 object-contain" />
             <div>
               <h1 className="text-lg font-semibold text-slate-900">Admin Panel</h1>
-              <p className="text-xs text-slate-500">Users & toegang beheren</p>
+              <p className="text-xs text-slate-500">
+                Gebruikers, nieuwe pompen en audit per woning
+              </p>
             </div>
           </div>
+
+          {tenantLabel && (
+            <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600">
+              {tenantLabel}
+            </span>
+          )}
         </div>
       </header>
 
@@ -112,22 +183,34 @@ export default function AdminPanelPage() {
         </div>
 
         <section className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+            <StatCard label="Accounts" value={String(stats.accounts)} />
             <StatCard label="Admins" value={String(stats.admins)} />
-            <StatCard label="Users" value={String(stats.normal)} />
-            <StatCard label="Geblokkeerd voor user" value={String(stats.lockedForUser)} />
+            <StatCard label="Nieuwe pompen" value={String(stats.newPumps)} />
+            <StatCard label="Auditregels" value={String(stats.auditRows)} />
           </div>
 
           {nav === 'users' && (
             <UsersSection
               users={filteredUsers}
               q={q}
+              tenantLabel={tenantLabel}
               onQueryChange={setQ}
               onRoleChange={saveUserRole}
               onDelete={deleteUser}
               onAdd={() => setShowAdd(true)}
             />
           )}
+
+          {nav === 'new-pumps' && (
+            <NewPumpsSection
+              pumps={newPumps}
+              savingPompId={savingPompId}
+              onAdd={addPumpToDatabase}
+            />
+          )}
+
+          {nav === 'audit' && <AuditSection entries={auditEntries} />}
         </section>
       </div>
 

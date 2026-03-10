@@ -1,10 +1,37 @@
 import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
-import { getPompen, updatePompStatus } from './_services/pompen';
+import { requireUserByToken } from '@/core/auth/session';
 
-export async function GET() {
-  const data = await getPompen();
-  return NextResponse.json(data);
+import { getPompenForWoning, updatePompStatus } from './_services/pompen';
+
+function errorMessage(err: unknown) {
+  return err instanceof Error && err.message ? err.message : 'Server error';
+}
+
+function errorStatus(err: unknown) {
+  if (
+    err instanceof Error &&
+    ['NO_SESSION_OR_EXPIRED', 'USER_NOT_FOUND', 'NOT_ADMIN'].includes(err.message)
+  ) {
+    return 401;
+  }
+
+  return 500;
+}
+
+export async function GET(req: NextRequest) {
+  try {
+    const token = req.cookies.get('session')?.value ?? null;
+    const user = await requireUserByToken(token);
+    const data = await getPompenForWoning(user.woning_code);
+    return NextResponse.json(data);
+  } catch (err) {
+    return NextResponse.json(
+      { status: 'error', message: errorMessage(err) },
+      { status: errorStatus(err) }
+    );
+  }
 }
 
 export async function POST(req: Request) {

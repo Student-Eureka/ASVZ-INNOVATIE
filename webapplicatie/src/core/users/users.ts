@@ -4,6 +4,7 @@ import {
   createUserRecord,
   deleteUserById,
   findExistingUser,
+  getUserById,
   getUsersList,
   updateUserById,
 } from '@/infra/userRepo';
@@ -16,22 +17,25 @@ function isRole(value: string): value is Role {
   return value === 'user' || value === 'admin';
 }
 
-export async function getUsers() {
-  return getUsersList();
+export async function getUsers(woningCode: string) {
+  return getUsersList(woningCode);
 }
 
-export async function createUser(payload: {
-  name?: unknown;
-  email?: unknown;
-  password?: unknown;
-  role?: unknown;
-}) {
+export async function createUser(
+  payload: {
+    name?: unknown;
+    email?: unknown;
+    password?: unknown;
+    role?: unknown;
+  },
+  woningCode: string
+) {
   const cleanName = String(payload.name ?? '').trim();
   const cleanEmail = String(payload.email ?? '').trim();
   const cleanRole = String(payload.role ?? '').trim();
   const cleanPassword = String(payload.password ?? '');
 
-  if (!cleanName || !cleanEmail || !cleanPassword || !isRole(cleanRole)) {
+  if (!cleanName || !cleanEmail || !cleanPassword || !isRole(cleanRole) || !woningCode) {
     return { success: false, status: 400, message: 'Ongeldige input' };
   }
 
@@ -41,28 +45,47 @@ export async function createUser(payload: {
   }
 
   const hashedPassword = await bcrypt.hash(cleanPassword, SALT_ROUNDS);
-  const result = await createUserRecord(cleanName, cleanEmail, hashedPassword, cleanRole);
+  const result = await createUserRecord(woningCode, cleanName, cleanEmail, hashedPassword, cleanRole);
 
   return { success: true, status: 200, id: result.insertId };
 }
 
-export async function deleteUser(payload: { id?: unknown }) {
+export async function deleteUser(payload: { id?: unknown }, viewer: { id: string; woningCode: string }) {
   if (!payload.id) {
     return { success: false, status: 400, message: 'Geen id opgegeven' };
   }
 
-  await deleteUserById(String(payload.id));
+  const targetId = String(payload.id);
+  if (targetId === viewer.id) {
+    return { success: false, status: 400, message: 'Eigen account kan niet verwijderd worden' };
+  }
+
+  const target = await getUserById(targetId);
+  if (!target.length || target[0].woning_code !== viewer.woningCode) {
+    return { success: false, status: 404, message: 'Gebruiker niet gevonden' };
+  }
+
+  await deleteUserById(targetId, viewer.woningCode);
   return { success: true, status: 200 };
 }
 
-export async function updateUser(payload: {
-  id?: unknown;
-  name?: unknown;
-  role?: unknown;
-  password?: unknown;
-}) {
+export async function updateUser(
+  payload: {
+    id?: unknown;
+    name?: unknown;
+    role?: unknown;
+    password?: unknown;
+  },
+  woningCode: string
+) {
   if (!payload.id) {
     return { success: false, status: 400, message: 'Geen id opgegeven' };
+  }
+
+  const targetId = String(payload.id);
+  const target = await getUserById(targetId);
+  if (!target.length || target[0].woning_code !== woningCode) {
+    return { success: false, status: 404, message: 'Gebruiker niet gevonden' };
   }
 
   const updates: string[] = [];
@@ -86,7 +109,7 @@ export async function updateUser(payload: {
     return { success: false, status: 400, message: 'Niets om te updaten' };
   }
 
-  await updateUserById(String(payload.id), updates.join(', '), values);
+  await updateUserById(targetId, updates.join(', '), values, woningCode);
 
   return { success: true, status: 200 };
 }
