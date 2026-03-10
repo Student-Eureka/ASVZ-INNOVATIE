@@ -22,6 +22,37 @@ sudo apt install -y git curl build-essential
 
 ---
 
+## 2.1 MySQL installeren (database)
+
+### Handmatig
+
+```bash
+sudo apt install -y mysql-server
+sudo systemctl enable mysql
+sudo systemctl start mysql
+```
+
+Database en schema importeren:
+
+```bash
+mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS asvz_db;"
+mysql -u root -p /opt/asvz/webapplicatie/db/asvz_db.sql
+```
+
+---
+
+### Automatisch (script)
+Gebruik het meegeleverde script:
+
+```bash
+sudo bash /opt/asvz/server/deploy_db_ubuntu.sh
+```
+
+Script verwacht dat de repo al staat in `/opt/asvz` en dat
+`/opt/asvz/webapplicatie/db/asvz_db.sql` bestaat.
+
+---
+
 ## 3. Node.js installeren (LTS)
 
 ```bash
@@ -65,9 +96,12 @@ Voorbeeld keys:
 
 ```
 DB_HOST=
+DB_PORT=
 DB_USER=
 DB_PASS=
 DB_NAME=
+HOST=
+PORT=
 
 MQTT_BROKER_URL=
 MQTT_USER=

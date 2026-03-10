@@ -56,7 +56,7 @@ Het script doet een **clean install**: bestaande Mosquitto + config worden verwi
 ### 3.1 Script uitvoeren
 ```bash
 chmod +x setup_mqtt_ubuntu.sh
-sudo ./setup_mqtt_ubuntu.sh
+sudo bash ./setup_mqtt_ubuntu.sh
 ```
 
 Het script vraagt om:
