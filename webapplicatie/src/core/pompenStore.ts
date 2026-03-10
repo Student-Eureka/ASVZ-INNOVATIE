@@ -17,7 +17,7 @@ export interface PompLogEntry {
   uniqueId: string;
   pompId: string;
   woning: string;
-  kind: 'status' | 'command';
+  kind: 'status' | 'command' | 'info';
   status?: string;
   message: string;
   createdAt: string;
@@ -141,6 +141,26 @@ export function recordServoCommand(params: {
     message: params.message ?? 'Servo-commando verstuurd',
     createdAt,
     topic: buildCommandTopic(params.woning, params.pompId),
+  });
+}
+
+export function recordPompInfo(params: {
+  woning: string;
+  pompId: string;
+  message: string;
+  createdAt?: string;
+  topic?: string;
+}) {
+  const createdAt = params.createdAt ?? new Date().toISOString();
+
+  pushLogEntry({
+    uniqueId: buildUniqueId(params.woning, params.pompId),
+    pompId: params.pompId,
+    woning: params.woning,
+    kind: 'info',
+    message: params.message,
+    createdAt,
+    topic: params.topic ?? buildStatusTopic(params.woning, params.pompId),
   });
 }
 

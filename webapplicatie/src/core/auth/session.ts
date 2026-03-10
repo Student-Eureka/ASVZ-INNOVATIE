@@ -27,12 +27,15 @@ export async function getSessionByTokenSafe(token?: string | null) {
   return session;
 }
 
-export async function requireAdminByToken(token?: string | null) {
+export async function requireUserByToken(token?: string | null) {
   if (AUTH_DISABLED) {
     return {
       woning_id: '4',
-      rol: 'admin',
+      woning_code: 'woning_a',
+      rol: 'admin' as const,
       gebruikersnaam: 'root',
+      email: 'root@asvz.local',
+      last_login: null,
     };
   }
 
@@ -40,7 +43,13 @@ export async function requireAdminByToken(token?: string | null) {
   if (!session) throw new Error('NO_SESSION_OR_EXPIRED');
 
   const users = await getUserById(session.user_id);
-  if (!users.length || users[0].rol !== 'admin') throw new Error('NOT_ADMIN');
+  if (!users.length) throw new Error('USER_NOT_FOUND');
 
   return users[0];
+}
+
+export async function requireAdminByToken(token?: string | null) {
+  const user = await requireUserByToken(token);
+  if (user.rol !== 'admin') throw new Error('NOT_ADMIN');
+  return user;
 }

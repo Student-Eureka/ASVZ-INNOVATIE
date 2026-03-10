@@ -1,4 +1,4 @@
-﻿import RolePill from './RolePill';
+import RolePill from './RolePill';
 import type { Role, UserRow } from '../_types/admin';
 
 interface UsersTableProps {
@@ -14,6 +14,7 @@ export default function UsersTable({ users, onRoleChange, onDelete }: UsersTable
         <tr className="text-left text-xs text-slate-500">
           <th className="py-2">Naam</th>
           <th className="py-2">Email</th>
+          <th className="py-2">Woning</th>
           <th className="py-2">Rol</th>
           <th className="py-2">Laatste login</th>
           <th className="py-2 text-right">Actie</th>
@@ -24,6 +25,7 @@ export default function UsersTable({ users, onRoleChange, onDelete }: UsersTable
           <tr key={u.id} className="border-t border-slate-200">
             <td className="py-3 font-semibold">{u.name}</td>
             <td className="py-3">{u.email}</td>
+            <td className="py-3 font-medium text-slate-500">{u.woningCode}</td>
             <td className="py-3">
               <div className="flex items-center gap-2">
                 <RolePill role={u.role} />
@@ -37,7 +39,7 @@ export default function UsersTable({ users, onRoleChange, onDelete }: UsersTable
                 </select>
               </div>
             </td>
-            <td className="py-3">{u.lastLogin || '—'}</td>
+            <td className="py-3">{u.lastLogin || '-'}</td>
             <td className="py-3 text-right">
               <button
                 onClick={() => onDelete(u.id)}
@@ -50,7 +52,7 @@ export default function UsersTable({ users, onRoleChange, onDelete }: UsersTable
         ))}
         {users.length === 0 && (
           <tr>
-            <td colSpan={5} className="py-8 text-center text-slate-500">
+            <td colSpan={6} className="py-8 text-center text-slate-500">
               Geen gebruikers gevonden.
             </td>
           </tr>

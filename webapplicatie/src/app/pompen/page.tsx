@@ -83,9 +83,9 @@ export default function PompenOverzichtPage() {
           <div className="rounded-3xl bg-white border border-slate-200 shadow-sm overflow-hidden">
             <div className="p-5 border-b border-slate-200 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
               <div>
-                <h2 className="text-2xl font-semibold text-slate-900">Actieve pompen</h2>
+                <h2 className="text-2xl font-semibold text-slate-900">Geregistreerde pompen</h2>
                 <p className="text-sm text-slate-500">
-                  Overzicht van pompen met de laatst ontvangen MQTT-status.
+                  Overzicht van pompen die in de database staan, met de laatst ontvangen MQTT-status.
                 </p>
               </div>
 
@@ -100,10 +100,7 @@ export default function PompenOverzichtPage() {
             </div>
 
             <div className="p-5">
-              <PompenList
-                items={filteredPompen}
-                onSelect={(id) => router.push(`/pompen/${id}`)}
-              />
+              <PompenList items={filteredPompen} onSelect={(id) => router.push(`/pompen/${id}`)} />
             </div>
           </div>
         </section>
