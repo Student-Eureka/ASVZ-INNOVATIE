@@ -127,7 +127,7 @@ export default function PompenList({ items, onSelect }: PompenListProps) {
 
       {items.length === 0 && (
         <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
-          Er zijn nog geen pompen met live data zichtbaar.
+          Er zijn nog geen geregistreerde pompen zichtbaar.
         </div>
       )}
     </div>

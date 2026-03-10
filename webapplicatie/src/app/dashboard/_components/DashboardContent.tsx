@@ -26,7 +26,7 @@ export default function DashboardContent({
   return (
     <section className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-        <StatCard label="Gevonden Pompen" value={stats.totaal} />
+        <StatCard label="Geregistreerde pompen" value={stats.totaal} />
         <StatCard label="Actief" value={stats.actief} />
         <StatCard label="Rust" value={stats.rust} />
         <StatCard label="Inactief" value={stats.inactief} />

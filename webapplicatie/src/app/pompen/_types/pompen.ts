@@ -15,7 +15,7 @@ export interface PompApiLogEntry {
   uniqueId: string;
   pompId: string;
   woning: string;
-  kind: 'status' | 'command';
+  kind: 'status' | 'command' | 'info';
   status?: string;
   message: string;
   createdAt: string;

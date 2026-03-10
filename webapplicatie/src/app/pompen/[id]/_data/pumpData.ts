@@ -32,7 +32,7 @@ function resolveStatusMessage(status: string) {
 function mapHistoryItems(items: PompApiLogEntry[]): PumpHistoryItem[] {
   return items.slice(0, 10).map((item) => ({
     id: item.id,
-    type: item.kind === 'command' ? 'command' : 'status',
+    type: item.kind === 'command' ? 'command' : item.kind === 'info' ? 'info' : 'status',
     message: item.message,
     time: formatRelativeTime(item.createdAt),
     topic: item.topic,

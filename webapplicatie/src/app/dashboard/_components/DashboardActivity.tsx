@@ -10,6 +10,10 @@ function getTone(event: DashboardEvent) {
     return 'bg-sky-50 text-sky-700 border-sky-200';
   }
 
+  if (event.kind === 'info') {
+    return 'bg-violet-50 text-violet-700 border-violet-200';
+  }
+
   const status = String(event.status ?? '').toLowerCase();
   if (status === 'actief') {
     return 'bg-emerald-50 text-emerald-700 border-emerald-200';
@@ -20,13 +24,19 @@ function getTone(event: DashboardEvent) {
   return 'bg-slate-50 text-slate-600 border-slate-200';
 }
 
+function getLabel(event: DashboardEvent) {
+  if (event.kind === 'command') return 'Commando';
+  if (event.kind === 'info') return 'Info';
+  return formatStatusLabel(String(event.status ?? 'inactief'));
+}
+
 export default function DashboardActivity({ events }: DashboardActivityProps) {
   return (
     <div className="rounded-3xl bg-white border border-slate-200 shadow-sm overflow-hidden">
       <div className="p-5 border-b border-slate-200">
         <h2 className="text-base font-semibold text-slate-900">Recente activiteit</h2>
         <p className="text-sm text-slate-500">
-          Laatste statusupdates en servo-acties direct op het dashboard.
+          Laatste statusupdates en servo-acties van geregistreerde pompen.
         </p>
       </div>
 
@@ -41,9 +51,7 @@ export default function DashboardActivity({ events }: DashboardActivityProps) {
                 <span
                   className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold border ${getTone(event)}`}
                 >
-                  {event.kind === 'command'
-                    ? 'Commando'
-                    : formatStatusLabel(String(event.status ?? 'inactief'))}
+                  {getLabel(event)}
                 </span>
                 <span className="text-sm font-semibold text-slate-900">
                   {event.woning.replace(/_/g, ' ')} / {event.pompId}

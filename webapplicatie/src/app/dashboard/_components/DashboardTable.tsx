@@ -1,4 +1,4 @@
-﻿import StatusPill from './StatusPill';
+import StatusPill from './StatusPill';
 import type { Pomp } from '../_types/dashboard';
 
 interface DashboardTableProps {
@@ -21,9 +21,7 @@ export default function DashboardTable({ pompen }: DashboardTableProps) {
             <td className="py-4 pl-2 font-bold text-[#E5007D]">
               {pomp.woning.replace('_', ' ').toUpperCase()}
             </td>
-            <td className="py-4 text-slate-500 font-medium">
-              {pomp.id.replace('_', ' ')}
-            </td>
+            <td className="py-4 text-slate-500 font-medium">{pomp.id.replace('_', ' ')}</td>
             <td className="py-4">
               <StatusPill status={pomp.status} />
             </td>
@@ -32,7 +30,7 @@ export default function DashboardTable({ pompen }: DashboardTableProps) {
         {pompen.length === 0 && (
           <tr>
             <td colSpan={3} className="py-8 text-center text-slate-500">
-              Wachten op signalen...
+              Er zijn nog geen geregistreerde pompen zichtbaar.
             </td>
           </tr>
         )}
