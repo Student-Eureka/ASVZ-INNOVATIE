@@ -1,7 +1,7 @@
 import { deleteSession, getSessionByToken } from '@/infra/sessionRepo';
 import { getUserById } from '@/infra/userRepo';
 
-const AUTH_DISABLED = true;
+const AUTH_DISABLED = process.env.AUTH_DISABLED === 'true';
 
 export async function getSessionByTokenSafe(token?: string | null) {
   if (AUTH_DISABLED) {
@@ -34,7 +34,6 @@ export async function requireUserByToken(token?: string | null) {
       woning_code: 'woning_a',
       rol: 'admin' as const,
       gebruikersnaam: 'root',
-      email: 'root@asvz.local',
       last_login: null,
     };
   }

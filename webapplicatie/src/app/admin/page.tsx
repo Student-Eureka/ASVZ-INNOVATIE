@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import AppSidebar from '../_components/AppSidebar';
 import AddUserModal from './_components/AddUserModal';
+import EditUserModal from './_components/EditUserModal';
 import AdminNav from './_components/AdminNav';
 import AuditSection from './_components/AuditSection';
 import NewPumpsSection from './_components/NewPumpsSection';
@@ -16,6 +17,7 @@ export default function AdminPanelPage() {
   const [nav, setNav] = useState<NavId>('users');
   const [q, setQ] = useState('');
   const [showAdd, setShowAdd] = useState(false);
+  const [editingUser, setEditingUser] = useState<UserRow | null>(null);
   const [users, setUsers] = useState<UserRow[]>([]);
   const [newPumps, setNewPumps] = useState<NewPumpRow[]>([]);
   const [auditEntries, setAuditEntries] = useState<AuditRow[]>([]);
@@ -71,15 +73,21 @@ export default function AdminPanelPage() {
     };
   }, [reloadKey]);
 
-  async function saveUserRole(userId: string, role: Role) {
+  async function updateUserDetails(payload: {
+    id: string;
+    name: string;
+    role: Role;
+    password?: string;
+  }) {
     try {
       const res = await fetch('/api/users', {
         method: 'PATCH',
-        body: JSON.stringify({ id: userId, role }),
+        body: JSON.stringify(payload),
         headers: { 'Content-Type': 'application/json' },
       });
-      if (!res.ok) throw new Error('Kon rol niet opslaan');
+      if (!res.ok) throw new Error('Kon gebruiker niet bijwerken');
       setReloadKey((value) => value + 1);
+      setEditingUser(null);
     } catch (err) {
       console.error(err);
     }
@@ -99,11 +107,11 @@ export default function AdminPanelPage() {
     }
   }
 
-  async function addUser(name: string, email: string, role: Role) {
+  async function addUser(name: string, role: Role) {
     try {
       const res = await fetch('/api/users', {
         method: 'POST',
-        body: JSON.stringify({ name, email, role, password: 'Wachtwoord123' }),
+        body: JSON.stringify({ name, role, password: 'Wachtwoord123' }),
         headers: { 'Content-Type': 'application/json' },
       });
       if (!res.ok) throw new Error('Kon gebruiker niet toevoegen');
@@ -135,7 +143,7 @@ export default function AdminPanelPage() {
     const s = q.trim().toLowerCase();
     if (!s) return users;
     return users.filter((u) =>
-      [u.name, u.email, u.role, u.woningCode].some((x) => (x || '').toLowerCase().includes(s))
+      [u.name, u.role, u.woningCode].some((x) => (x || '').toLowerCase().includes(s))
     );
   }, [users, q]);
 
@@ -196,7 +204,7 @@ export default function AdminPanelPage() {
               q={q}
               tenantLabel={tenantLabel}
               onQueryChange={setQ}
-              onRoleChange={saveUserRole}
+              onEdit={(user) => setEditingUser(user)}
               onDelete={deleteUser}
               onAdd={() => setShowAdd(true)}
             />
@@ -215,6 +223,13 @@ export default function AdminPanelPage() {
       </div>
 
       {showAdd && <AddUserModal onClose={() => setShowAdd(false)} onSubmit={addUser} />}
+      {editingUser && (
+        <EditUserModal
+          user={editingUser}
+          onClose={() => setEditingUser(null)}
+          onSubmit={updateUserDetails}
+        />
+      )}
     </main>
   );
 }

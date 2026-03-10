@@ -24,28 +24,26 @@ export async function getUsers(woningCode: string) {
 export async function createUser(
   payload: {
     name?: unknown;
-    email?: unknown;
     password?: unknown;
     role?: unknown;
   },
   woningCode: string
 ) {
   const cleanName = String(payload.name ?? '').trim();
-  const cleanEmail = String(payload.email ?? '').trim();
   const cleanRole = String(payload.role ?? '').trim();
   const cleanPassword = String(payload.password ?? '');
 
-  if (!cleanName || !cleanEmail || !cleanPassword || !isRole(cleanRole) || !woningCode) {
+  if (!cleanName || !cleanPassword || !isRole(cleanRole) || !woningCode) {
     return { success: false, status: 400, message: 'Ongeldige input' };
   }
 
-  const existing = await findExistingUser(cleanName, cleanEmail);
+  const existing = await findExistingUser(cleanName);
   if (existing.length > 0) {
     return { success: false, status: 400, message: 'Gebruiker bestaat al' };
   }
 
   const hashedPassword = await bcrypt.hash(cleanPassword, SALT_ROUNDS);
-  const result = await createUserRecord(woningCode, cleanName, cleanEmail, hashedPassword, cleanRole);
+  const result = await createUserRecord(woningCode, cleanName, hashedPassword, cleanRole);
 
   return { success: true, status: 200, id: result.insertId };
 }

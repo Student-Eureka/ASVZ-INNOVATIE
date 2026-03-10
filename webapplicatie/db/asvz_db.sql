@@ -31,19 +31,11 @@ CREATE TABLE `woningen` (
   `woning_id` int(11) NOT NULL,
   `woning_code` varchar(100) NOT NULL,
   `gebruikersnaam` varchar(100) NOT NULL,
-  `email` varchar(190) NOT NULL,
+  `email` varchar(190) DEFAULT NULL,
   `wachtwoord` varchar(255) NOT NULL,
   `rol` enum('admin','user') NOT NULL DEFAULT 'user',
   `last_login` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Gegevens worden geëxporteerd voor tabel `woningen`
---
-
-INSERT INTO `woningen` (`woning_id`, `woning_code`, `gebruikersnaam`, `email`, `wachtwoord`, `rol`, `last_login`) VALUES
-(4, 'woning_a', 'root', 'root@asvz.local', '$2b$12$rdRHayrRSdsdwlQ9gCzaxukf2AcXia9w5ZXyjU3MKK1jN/230zDyy', 'admin', NULL),
-(5, 'woning_b', 'test', 'test@asvz.local', '$2b$12$eF/ileULWIl35QpZKVr6Q.5nzViXZ1U17KI/ZjUZl8MuOLCB6laCO', 'user', NULL);
 
 -- --------------------------------------------------------
 
@@ -85,7 +77,6 @@ CREATE TABLE `sessions` (
 ALTER TABLE `woningen`
   ADD PRIMARY KEY (`woning_id`),
   ADD UNIQUE KEY `gebruikersnaam` (`gebruikersnaam`),
-  ADD UNIQUE KEY `email` (`email`),
   ADD KEY `idx_woningen_woning_code` (`woning_code`);
 
 --

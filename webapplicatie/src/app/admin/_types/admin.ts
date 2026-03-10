@@ -4,7 +4,6 @@ export type NavId = 'users' | 'new-pumps' | 'audit';
 export type UserRow = {
   id: string;
   name: string;
-  email: string;
   role: Role;
   lastLogin?: string;
   woningCode: string;

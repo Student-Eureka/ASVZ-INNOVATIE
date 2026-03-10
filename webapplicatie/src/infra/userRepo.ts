@@ -16,7 +16,6 @@ interface ExistingUserRow extends RowDataPacket {
 interface UserRow extends RowDataPacket {
   id: string;
   name: string;
-  email: string;
   role: 'admin' | 'user';
   lastLogin: string | null;
   woningCode: string;
@@ -27,7 +26,6 @@ interface UserByIdRow extends RowDataPacket {
   woning_code: string;
   rol: 'admin' | 'user';
   gebruikersnaam: string;
-  email: string;
   last_login: string | null;
 }
 
@@ -39,10 +37,10 @@ export async function getUserForLogin(gebruikersnaam: string) {
   return rows;
 }
 
-export async function findExistingUser(gebruikersnaam: string, email: string) {
+export async function findExistingUser(gebruikersnaam: string) {
   const [rows] = await db.query<ExistingUserRow[]>(
-    'SELECT woning_id FROM woningen WHERE gebruikersnaam = ? OR email = ?',
-    [gebruikersnaam, email]
+    'SELECT woning_id FROM woningen WHERE gebruikersnaam = ?',
+    [gebruikersnaam]
   );
   return rows;
 }
@@ -50,13 +48,12 @@ export async function findExistingUser(gebruikersnaam: string, email: string) {
 export async function createUserRecord(
   woningCode: string,
   gebruikersnaam: string,
-  email: string,
   hashedPassword: string,
   rol: 'admin' | 'user'
 ) {
   const [result] = await db.query<ResultSetHeader>(
-    'INSERT INTO woningen (woning_code, gebruikersnaam, email, wachtwoord, rol) VALUES (?, ?, ?, ?, ?)',
-    [woningCode, gebruikersnaam, email, hashedPassword, rol]
+    'INSERT INTO woningen (woning_code, gebruikersnaam, wachtwoord, rol) VALUES (?, ?, ?, ?)',
+    [woningCode, gebruikersnaam, hashedPassword, rol]
   );
   return result;
 }
@@ -65,7 +62,6 @@ export async function getUsersList(woningCode: string) {
   const [rows] = await db.query<UserRow[]>(
     `SELECT woning_id AS id,
             gebruikersnaam AS name,
-            email,
             rol AS role,
             last_login AS lastLogin,
             woning_code AS woningCode
@@ -96,7 +92,7 @@ export async function updateUserById(
 
 export async function getUserById(id: string) {
   const [rows] = await db.query<UserByIdRow[]>(
-    `SELECT woning_id, woning_code, rol, gebruikersnaam, email, last_login
+    `SELECT woning_id, woning_code, rol, gebruikersnaam, last_login
        FROM woningen
       WHERE woning_id = ?`,
     [id]

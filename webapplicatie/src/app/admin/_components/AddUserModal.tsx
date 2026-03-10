@@ -2,7 +2,7 @@ import type { Role } from '../_types/admin';
 
 interface AddUserModalProps {
   onClose: () => void;
-  onSubmit: (name: string, email: string, role: Role) => void;
+  onSubmit: (name: string, role: Role) => void;
 }
 
 export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
@@ -15,10 +15,8 @@ export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
             e.preventDefault();
             const fd = new FormData(e.currentTarget);
             const name = String(fd.get('name') || '').trim() || 'Onbekend';
-            const email = String(fd.get('email') || '').trim();
             const role = String(fd.get('role') || 'user') as Role;
-            if (!email) return;
-            onSubmit(name, email, role);
+            onSubmit(name, role);
           }}
           className="space-y-3"
         >
@@ -26,15 +24,6 @@ export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
             <label className="text-xs text-slate-600">Naam</label>
             <input
               name="name"
-              className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-900"
-            />
-          </div>
-          <div>
-            <label className="text-xs text-slate-600">Email</label>
-            <input
-              name="email"
-              type="email"
-              required
               className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-900"
             />
           </div>

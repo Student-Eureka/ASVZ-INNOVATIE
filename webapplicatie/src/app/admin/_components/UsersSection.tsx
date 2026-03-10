@@ -1,12 +1,12 @@
 import UsersTable from './UsersTable';
-import type { Role, UserRow } from '../_types/admin';
+import type { UserRow } from '../_types/admin';
 
 interface UsersSectionProps {
   users: UserRow[];
   q: string;
   tenantLabel: string;
   onQueryChange: (value: string) => void;
-  onRoleChange: (id: string, role: Role) => void;
+  onEdit: (user: UserRow) => void;
   onDelete: (id: string) => void;
   onAdd: () => void;
 }
@@ -16,7 +16,7 @@ export default function UsersSection({
   q,
   tenantLabel,
   onQueryChange,
-  onRoleChange,
+  onEdit,
   onDelete,
   onAdd,
 }: UsersSectionProps) {
@@ -34,7 +34,7 @@ export default function UsersSection({
           <input
             value={q}
             onChange={(e) => onQueryChange(e.target.value)}
-            placeholder="Zoek op naam, email, rol..."
+            placeholder="Zoek op naam, rol, woning..."
             className="w-full md:w-64 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900"
           />
           <button
@@ -47,7 +47,7 @@ export default function UsersSection({
       </div>
 
       <div className="p-5 overflow-x-auto">
-        <UsersTable users={users} onRoleChange={onRoleChange} onDelete={onDelete} />
+        <UsersTable users={users} onEdit={onEdit} onDelete={onDelete} />
       </div>
     </div>
   );
