@@ -1,22 +1,23 @@
-﻿export type PumpStatus = 'ALARM' | 'OK';
+export type PumpStatus = 'actief' | 'rust' | 'inactief' | string;
 
 export interface PumpHistoryItem {
   id: string;
-  type: 'alarm' | 'info';
+  type: 'status' | 'command' | 'info';
   message: string;
   time: string;
+  topic: string;
 }
 
 export interface PumpData {
+  uniqueId: string;
+  id: string;
+  woning: string;
   name: string;
   location: string;
   status: PumpStatus;
-  alarmType: string;
-  fluidLevel: number;
-  batteryLevel: number;
-  flowRate: string;
+  statusMessage: string;
   lastUpdate: string;
-  temperature: string;
-  wifiName: string;
+  statusTopic: string;
+  commandTopic: string;
   history: PumpHistoryItem[];
 }

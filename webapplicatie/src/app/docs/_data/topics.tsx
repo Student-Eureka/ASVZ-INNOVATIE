@@ -1,11 +1,10 @@
-﻿import type { ContentBlock, Topic, TopicId } from '../_types/docs';
+import type { ContentBlock, Topic, TopicId } from '../_types/docs';
 
 export const TOPICS: Topic[] = [
   { id: 'login', titel: 'Inloggen', subtitel: 'Scherm 1' },
   { id: 'dashboard', titel: 'Dashboard', subtitel: 'Scherm 2' },
   { id: 'select-pomp', titel: 'Selecteer pomp', subtitel: 'Scherm 3' },
   { id: 'pomp', titel: 'Pompscherm', subtitel: 'Scherm 4' },
-  { id: 'logboek', titel: 'Status & logboek', subtitel: 'Scherm 5' },
   { id: 'waarom', titel: 'Waarom deze uitleg?', subtitel: '' },
   { id: 'architectuur', titel: 'Architectuur', subtitel: 'Overzicht' },
 ];
@@ -36,18 +35,15 @@ export function getContent(id: TopicId): ContentBlock | null {
           <>
             <p className="text-sm text-slate-600 mb-2">
               Het <span className="font-semibold">dashboard</span> is het
-              startpunt na het inloggen. Hier staan de belangrijkste knoppen en
-              tegels bij elkaar.
+              startpunt na het inloggen. Hier staan de belangrijkste gegevens
+              en recente activiteit bij elkaar.
             </p>
             <ul className="list-disc list-inside text-sm text-slate-600 space-y-1">
               <li>
                 <span className="font-semibold">Actieve pompen</span> – overzicht van beschikbare pompen.
               </li>
               <li>
-                <span className="font-semibold">Start/stop pomp</span> – bediening van de gekozen pomp.
-              </li>
-              <li>
-                <span className="font-semibold">Status / logboek</span> – laatste meldingen en gebeurtenissen.
+                <span className="font-semibold">Recente activiteit</span> – laatste statusupdates en servo-acties.
               </li>
               <li>
                 <span className="font-semibold">Documentatie</span> – opent deze uitleg.
@@ -66,9 +62,8 @@ export function getContent(id: TopicId): ContentBlock | null {
               u welke pomp u wilt bekijken of bedienen.
             </p>
             <p className="text-sm text-slate-600">
-              Elke tegel toont de naam van de pomp en een korte status, zoals
-              “Start klaar” of “Niet in gebruik”. Na het kiezen gaat u naar het
-              pompscherm van die pomp.
+              Elke kaart toont de naam van de pomp, de woning en de actuele
+              status. Na het kiezen gaat u naar het pompscherm van die pomp.
             </p>
           </>
         ),
@@ -80,33 +75,12 @@ export function getContent(id: TopicId): ContentBlock | null {
           <>
             <p className="text-sm text-slate-600 mb-2">
               Het <span className="font-semibold">pompscherm</span> toont
-              details van de geselecteerde pomp, zoals de actuele status
-              (bijvoorbeeld “Draait” of “Gestopt”).
+              details van de geselecteerde pomp, zoals de actuele status en de
+              laatste update.
             </p>
             <p className="text-sm text-slate-600">
-              Vanuit dit scherm kan de pomp gestart of gestopt worden, afhankelijk
-              van de bevoegdheden en de situatie op de afdeling.
-            </p>
-          </>
-        ),
-      };
-    case 'logboek':
-      return {
-        title: 'Status & logboek (Scherm 5)',
-        body: (
-          <>
-            <p className="text-sm text-slate-600 mb-2">
-              Het <span className="font-semibold">statuslogboek</span> laat een
-              chronologisch overzicht zien van belangrijke gebeurtenissen.
-            </p>
-            <ul className="list-disc list-inside text-sm text-slate-600 space-y-1 mb-2">
-              <li>Starten of stoppen van een pomp.</li>
-              <li>Wijzigingen in ingestelde toevoer / debiet.</li>
-              <li>Storingen of meldingen van een pomp.</li>
-            </ul>
-            <p className="text-sm text-slate-600">
-              Per regel ziet u de tijd, de betreffende pomp en een korte
-              omschrijving. Dit helpt bij terugzoeken en overdracht tussen diensten.
+              Vanuit dit scherm kan het servo-commando worden verstuurd en zijn
+              de recente meldingen van die specifieke pomp direct zichtbaar.
             </p>
           </>
         ),
@@ -139,8 +113,8 @@ export function getContent(id: TopicId): ContentBlock | null {
               <span className="font-semibold"> Infra</span>. Een laag mag alleen de laag eronder kennen.
             </p>
             <p className="text-sm text-slate-600">
-              MQTT draait server-side en levert data via de API. Database‑logica
-              zit in de infra‑laag, business logic in core. Zo blijft de UI schoon
+              MQTT draait server-side en levert data via de API. Database-logica
+              zit in de infra-laag, business logic in core. Zo blijft de UI schoon
               en het systeem uitbreidbaar.
             </p>
           </>

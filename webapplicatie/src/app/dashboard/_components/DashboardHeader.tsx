@@ -1,4 +1,6 @@
-﻿interface DashboardHeaderProps {
+import Image from 'next/image';
+
+interface DashboardHeaderProps {
   statusText: string;
   onLogout: () => void;
 }
@@ -8,7 +10,7 @@ export default function DashboardHeader({ statusText, onLogout }: DashboardHeade
     <header className="sticky top-0 z-20 bg-white/90 border-b border-slate-200 backdrop-blur">
       <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <img src="/logo.svg" alt="ASVZ Logo" className="w-10 h-10 object-contain" />
+          <Image src="/logo.svg" alt="ASVZ Logo" width={40} height={40} className="w-10 h-10" />
           <div>
             <h1 className="text-lg font-semibold text-slate-900">Sonde Dashboard</h1>
             <p className="text-xs text-slate-500">

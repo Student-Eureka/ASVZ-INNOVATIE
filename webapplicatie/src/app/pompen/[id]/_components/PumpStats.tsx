@@ -1,92 +1,52 @@
-﻿import type { ReactNode } from 'react';
-import { Activity, Battery, Droplets, PlayCircle, Thermometer, Wifi } from 'lucide-react';
+import type { ReactNode } from 'react';
+import { Clock3, Hash, Home, Send } from 'lucide-react';
+
 import type { PumpData } from '../_types/pomp';
 
 interface StatBoxProps {
   icon: ReactNode;
   label: string;
   value: string;
-  subLabel?: string;
-  subColor?: string;
-  progress?: number;
 }
 
-function StatBox({ icon, label, value, subLabel, subColor, progress }: StatBoxProps) {
+function StatBox({ icon, label, value }: StatBoxProps) {
   return (
-    <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between h-32 hover:shadow-md transition-shadow">
-      <div className="flex justify-between items-start">
+    <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between min-h-28">
+      <div className="flex justify-between items-start gap-4">
         <span className="text-gray-400 text-xs font-bold uppercase">{label}</span>
         <div className="bg-gray-50 p-1.5 rounded-lg">{icon}</div>
       </div>
-      <div>
-        <span className="text-xl font-bold text-gray-800 block">{value}</span>
-        {subLabel && <span className="text-xs text-gray-400">{subLabel}</span>}
-
-        {progress !== undefined && subColor && (
-          <div className="w-full bg-gray-100 h-1.5 mt-2 rounded-full overflow-hidden">
-            <div className={`h-full ${subColor}`} style={{ width: `${progress}%` }}></div>
-          </div>
-        )}
-      </div>
+      <span className="text-sm font-semibold text-gray-800 break-all">{value}</span>
     </div>
   );
 }
 
 interface PumpStatsProps {
   data: PumpData;
-  onServoTest: () => void;
-  servoLoading: boolean;
 }
 
-export default function PumpStats({ data, onServoTest, servoLoading }: PumpStatsProps) {
+export default function PumpStats({ data }: PumpStatsProps) {
   return (
     <>
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-gray-800 font-bold text-lg flex items-center gap-2">
-          <Activity size={18} className="text-[#E30059]" /> Live Gegevens
-        </h3>
-        <button
-          onClick={onServoTest}
-          disabled={servoLoading}
-          className="bg-white border-2 border-[#E30059] text-[#E30059] hover:bg-[#E30059] hover:text-white px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-2 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {servoLoading ? (
-            <span className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full"></span>
-          ) : (
-            <PlayCircle size={16} />
-          )}
-          Test Servo
-        </button>
+      <div className="mb-4">
+        <h3 className="text-gray-800 font-bold text-lg">Pompinformatie</h3>
+        <p className="text-sm text-slate-500">
+          Technische details en de laatst bekende MQTT-routes voor deze pomp.
+        </p>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
+        <StatBox icon={<Home className="text-[#E30059]" size={18} />} label="Woning" value={data.location} />
+        <StatBox icon={<Hash className="text-slate-600" size={18} />} label="Pomp ID" value={data.id} />
         <StatBox
-          icon={
-            <Battery
-              className={data.batteryLevel < 20 ? 'text-red-500' : 'text-green-500'}
-            />
-          }
-          label="Batterij"
-          value={`${data.batteryLevel}%`}
-          subColor={data.batteryLevel < 20 ? 'bg-red-500' : 'bg-green-500'}
-          progress={data.batteryLevel}
+          icon={<Clock3 className="text-amber-500" size={18} />}
+          label="Laatste update"
+          value={data.lastUpdate}
         />
         <StatBox
-          icon={<Droplets className="text-blue-500" />}
-          label="Snelheid"
-          value={data.flowRate}
-          subLabel={`Resterend: ${data.fluidLevel}%`}
-        />
-        <StatBox
-          icon={<Wifi className="text-gray-600" />}
-          label="Verbinding"
-          value="Sterk"
-          subLabel={data.wifiName}
-        />
-        <StatBox
-          icon={<Thermometer className="text-orange-500" />}
-          label="Temperatuur"
-          value={data.temperature}
+          icon={<Send className="text-sky-500" size={18} />}
+          label="Command topic"
+          value={data.commandTopic}
         />
       </div>
     </>

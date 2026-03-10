@@ -1,5 +1,6 @@
-﻿'use client';
+'use client';
 
+import Image from 'next/image';
 import { useState } from 'react';
 
 import type { LoginPayload, LoginResponse } from '../_types/login';
@@ -31,18 +32,10 @@ export default function LoginCard() {
   return (
     <div className="w-full max-w-md bg-white/95 rounded-3xl shadow-2xl border border-slate-200 overflow-hidden">
       <div className="flex items-center gap-4 px-6 py-5 bg-white">
-        <img
-          src="/logo.svg"
-          alt="ASVZ logo"
-          className="w-16 h-16 object-contain"
-        />
+        <Image src="/logo.svg" alt="ASVZ logo" width={64} height={64} className="w-16 h-16 object-contain" />
         <div>
-          <h1 className="text-lg font-semibold text-slate-900">
-            ASVZ Sondedashboard
-          </h1>
-          <p className="text-xs text-slate-500">
-            Log in om de sondepompen te beheren.
-          </p>
+          <h1 className="text-lg font-semibold text-slate-900">ASVZ Sondedashboard</h1>
+          <p className="text-xs text-slate-500">Log in om de sondepompen te beheren.</p>
         </div>
       </div>
 

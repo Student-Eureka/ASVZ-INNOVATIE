@@ -1,33 +1,67 @@
-﻿import type { PumpData } from '../_types/pomp';
+import {
+  formatPompLabel,
+  formatRelativeTime,
+  formatWoningLabel,
+  normalizePompStatus,
+} from '../../_data/pompen';
+import type { PompApiLogEntry, PompApiRecord } from '../../_types/pompen';
+import type { PumpData, PumpHistoryItem } from '../_types/pomp';
 
-function resolveDisplayName(pumpId: string | string[] | undefined) {
-  if (!pumpId) return 'Pomp Onbekend';
-
-  const idString = Array.isArray(pumpId) ? pumpId[0] : pumpId;
-  if (idString.includes('-')) {
-    return `Pomp ${idString.split('-')[1].toUpperCase()}`;
+function readPumpId(pumpId: string | string[] | undefined) {
+  if (Array.isArray(pumpId)) {
+    return pumpId[0] ?? '';
   }
-  return `Pomp ${idString}`;
+
+  return pumpId ?? '';
 }
 
-export function createPumpData(pumpId: string | string[] | undefined): PumpData {
-  const displayName = resolveDisplayName(pumpId);
+function resolveStatusMessage(status: string) {
+  const normalized = normalizePompStatus(status);
+
+  if (normalized === 'actief') {
+    return 'Pomp is actief en verwerkt op dit moment een melding.';
+  }
+
+  if (normalized === 'rust') {
+    return 'Pomp staat in rust en wacht op een volgende actie.';
+  }
+
+  return 'Nog geen bruikbare live status ontvangen voor deze pomp.';
+}
+
+function mapHistoryItems(items: PompApiLogEntry[]): PumpHistoryItem[] {
+  return items.slice(0, 10).map((item) => ({
+    id: item.id,
+    type: item.kind === 'command' ? 'command' : 'status',
+    message: item.message,
+    time: formatRelativeTime(item.createdAt),
+    topic: item.topic,
+  }));
+}
+
+export function createPumpData(
+  pumpId: string | string[] | undefined,
+  record: PompApiRecord | null,
+  logItems: PompApiLogEntry[]
+): PumpData {
+  const resolvedPumpId = readPumpId(pumpId) || record?.id || 'pomp_onbekend';
+  const woning = record?.woning || 'woning_onbekend';
+  const uniqueId = record?.uniqueId || `${woning}_${resolvedPumpId}`;
+  const status = normalizePompStatus(String(record?.status ?? 'inactief'));
+  const statusTopic = record?.statusTopic || `asvz/${woning}/${resolvedPumpId}/status`;
+  const commandTopic = record?.commandTopic || `asvz/${woning}/${resolvedPumpId}/set`;
 
   return {
-    name: displayName,
-    location: 'Woning A - Kamer 4 (Jan de Vries)',
-    status: 'ALARM',
-    alarmType: 'Obstructie gedetecteerd',
-    fluidLevel: 45,
-    batteryLevel: 15,
-    flowRate: '120 ml/u',
-    lastUpdate: 'Zojuist',
-    temperature: '36.5°C',
-    wifiName: 'WiFi: Eureka_2.4',
-    history: [
-      { id: '1', type: 'alarm', message: 'Alarm: Obstructie lijn gedetecteerd', time: 'Vandaag, 14:20' },
-      { id: '2', type: 'info', message: 'Reguliere systeemcontrole uitgevoerd', time: 'Vandaag, 14:10' },
-      { id: '3', type: 'info', message: 'Reguliere systeemcontrole uitgevoerd', time: 'Vandaag, 14:00' },
-    ],
+    uniqueId,
+    id: resolvedPumpId,
+    woning,
+    name: formatPompLabel(resolvedPumpId),
+    location: formatWoningLabel(woning),
+    status,
+    statusMessage: resolveStatusMessage(status),
+    lastUpdate: record ? formatRelativeTime(record.lastUpdate) : 'Nog geen update',
+    statusTopic,
+    commandTopic,
+    history: mapHistoryItems(logItems),
   };
 }

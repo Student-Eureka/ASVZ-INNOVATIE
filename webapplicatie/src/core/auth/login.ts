@@ -1,8 +1,8 @@
-﻿import bcrypt from 'bcrypt';
+import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 
 import { createSession } from '@/infra/sessionRepo';
-import { getUserForLogin } from '@/infra/userRepo';
+import { getUserForLogin, touchUserLastLogin } from '@/infra/userRepo';
 
 interface LoginResult {
   success: boolean;
@@ -37,7 +37,8 @@ export async function loginWithPassword(
   const token = crypto.randomUUID();
   const expires = new Date(Date.now() + 1000 * SESSION_MAX_AGE_SECONDS);
 
-  await createSession(user.woning_id, expires, token);
+  await createSession(String(user.woning_id), expires, token);
+  await touchUserLastLogin(String(user.woning_id));
 
   return { success: true, status: 200, token, maxAgeSeconds: SESSION_MAX_AGE_SECONDS };
 }

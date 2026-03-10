@@ -1,20 +1,26 @@
-﻿import { db } from './db';
+import type { RowDataPacket } from 'mysql2/promise';
 
-// Maakt een nieuwe sessie aan in de database.
-export async function createSession(userId: string, expiresAt: Date, token: string) {
-  await db.query(
-    'INSERT INTO sessions (id, user_id, expires_at) VALUES (?, ?, ?)',
-    [token, userId, expiresAt]
-  );
+import { db } from './db';
+
+interface SessionRow extends RowDataPacket {
+  id: string;
+  user_id: string;
+  expires_at: Date | string;
 }
 
-// Haalt een sessie op via token (voor validatie)
+export async function createSession(userId: string, expiresAt: Date, token: string) {
+  await db.query('INSERT INTO sessions (id, user_id, expires_at) VALUES (?, ?, ?)', [
+    token,
+    userId,
+    expiresAt,
+  ]);
+}
+
 export async function getSessionByToken(token: string) {
-  const [rows]: any = await db.query('SELECT * FROM sessions WHERE id = ?', [token]);
+  const [rows] = await db.query<SessionRow[]>('SELECT * FROM sessions WHERE id = ?', [token]);
   return rows;
 }
 
-// Verwijdert een sessie (bij uitloggen of verlopen)
 export async function deleteSession(token: string) {
   await db.query('DELETE FROM sessions WHERE id = ?', [token]);
 }

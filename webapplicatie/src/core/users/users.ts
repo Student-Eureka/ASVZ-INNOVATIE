@@ -1,4 +1,4 @@
-﻿import bcrypt from 'bcrypt';
+import bcrypt from 'bcrypt';
 
 import {
   createUserRecord,
@@ -12,6 +12,10 @@ const SALT_ROUNDS = 12;
 
 type Role = 'user' | 'admin';
 
+function isRole(value: string): value is Role {
+  return value === 'user' || value === 'admin';
+}
+
 export async function getUsers() {
   return getUsersList();
 }
@@ -24,14 +28,14 @@ export async function createUser(payload: {
 }) {
   const cleanName = String(payload.name ?? '').trim();
   const cleanEmail = String(payload.email ?? '').trim();
-  const cleanRole = String(payload.role ?? '').trim() as Role | '';
+  const cleanRole = String(payload.role ?? '').trim();
   const cleanPassword = String(payload.password ?? '');
 
-  if (!cleanName || !cleanEmail || !cleanPassword || !['user', 'admin'].includes(cleanRole)) {
+  if (!cleanName || !cleanEmail || !cleanPassword || !isRole(cleanRole)) {
     return { success: false, status: 400, message: 'Ongeldige input' };
   }
 
-  const existing = await findExistingUser(cleanName);
+  const existing = await findExistingUser(cleanName, cleanEmail);
   if (existing.length > 0) {
     return { success: false, status: 400, message: 'Gebruiker bestaat al' };
   }
@@ -62,15 +66,15 @@ export async function updateUser(payload: {
   }
 
   const updates: string[] = [];
-  const values: any[] = [];
+  const values: string[] = [];
 
   if (payload.role && ['user', 'admin'].includes(String(payload.role))) {
     updates.push('rol = ?');
-    values.push(payload.role);
+    values.push(String(payload.role));
   }
   if (payload.name) {
     updates.push('gebruikersnaam = ?');
-    values.push(payload.name);
+    values.push(String(payload.name));
   }
   if (payload.password) {
     const hashedPassword = await bcrypt.hash(String(payload.password), SALT_ROUNDS);

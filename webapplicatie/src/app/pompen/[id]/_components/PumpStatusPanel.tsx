@@ -1,92 +1,94 @@
-﻿import { Activity, Bell, BellOff, Clock } from 'lucide-react';
+import { Activity, PauseCircle, Power, Radio, Send } from 'lucide-react';
+
+import { formatStatusLabel, normalizePompStatus } from '../../_data/pompen';
 import type { PumpData } from '../_types/pomp';
 
 interface PumpStatusPanelProps {
   data: PumpData;
-  isSnoozed: boolean;
-  snoozeTime: number;
-  onSnooze: () => void;
+  isCoolingDown: boolean;
+  cooldownTime: number;
+  servoLoading: boolean;
+  onServoAction: () => void;
   formatTime: (seconds: number) => string;
+}
+
+function getStatusMeta(status: string) {
+  const normalized = normalizePompStatus(status);
+
+  if (normalized === 'actief') {
+    return {
+      icon: Activity,
+      ringClass: 'border-emerald-100 bg-emerald-50 shadow-emerald-200 text-emerald-500',
+      barClass: 'bg-emerald-500',
+    };
+  }
+
+  if (normalized === 'rust') {
+    return {
+      icon: PauseCircle,
+      ringClass: 'border-yellow-100 bg-yellow-50 shadow-yellow-200 text-yellow-500',
+      barClass: 'bg-yellow-500',
+    };
+  }
+
+  return {
+    icon: Power,
+    ringClass: 'border-slate-100 bg-slate-50 shadow-slate-200 text-slate-500',
+    barClass: 'bg-slate-300',
+  };
 }
 
 export default function PumpStatusPanel({
   data,
-  isSnoozed,
-  snoozeTime,
-  onSnooze,
+  isCoolingDown,
+  cooldownTime,
+  servoLoading,
+  onServoAction,
   formatTime,
 }: PumpStatusPanelProps) {
-  return (
-    <div className="w-full md:w-1/3 p-6 md:p-10 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-gray-200 bg-white relative overflow-hidden">
-      <div
-        className={`absolute top-0 left-0 right-0 h-2 md:h-full md:w-2 ${
-          data.status === 'ALARM' ? 'bg-red-500' : 'bg-emerald-500'
-        }`}
-      ></div>
+  const meta = getStatusMeta(data.status);
+  const StatusIcon = meta.icon;
 
-      <div className="relative mb-6 md:mb-10 mt-4">
+  return (
+    <div className="w-full md:w-[360px] p-6 md:p-10 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-gray-200 bg-white relative overflow-hidden">
+      <div className={`absolute top-0 left-0 right-0 h-2 md:h-full md:w-2 ${meta.barClass}`} />
+
+      <div className="relative mb-6 md:mb-8 mt-4">
         <div
-          className={`w-40 h-40 md:w-56 md:h-56 rounded-full flex items-center justify-center border-8 shadow-xl transition-all duration-500
-            ${
-              data.status === 'ALARM'
-                ? 'border-red-100 bg-red-50 shadow-red-200'
-                : 'border-emerald-100 bg-emerald-50 shadow-emerald-200'
-            }`}
+          className={`w-40 h-40 md:w-56 md:h-56 rounded-full flex items-center justify-center border-8 shadow-xl transition-all duration-300 ${meta.ringClass}`}
         >
-          <div
-            className={`relative z-10 flex flex-col items-center
-              ${data.status === 'ALARM' ? 'text-red-500' : 'text-emerald-500'}`}
-          >
-            {data.status === 'ALARM' ? (
-              <Bell size={48} className="animate-bounce" />
-            ) : (
-              <Activity size={56} />
-            )}
+          <div className="relative z-10 flex flex-col items-center">
+            <StatusIcon size={56} />
             <span className="font-bold text-2xl md:text-3xl mt-2">
-              {data.status}
+              {formatStatusLabel(String(data.status))}
             </span>
           </div>
-
-          {data.status === 'ALARM' && (
-            <>
-              <div className="absolute inset-0 rounded-full border-4 border-red-500 opacity-20 animate-ping"></div>
-              <div className="absolute -inset-4 rounded-full border-2 border-red-500 opacity-10 animate-pulse"></div>
-            </>
-          )}
         </div>
       </div>
 
-      <div className="text-center mb-8">
-        <h2 className="text-gray-800 font-bold text-xl md:text-2xl mb-1">
-          {data.status === 'ALARM' ? data.alarmType : 'Systeem in orde'}
-        </h2>
+      <div className="text-center mb-8 max-w-xs">
+        <h2 className="text-gray-800 font-bold text-xl md:text-2xl mb-2">{data.statusMessage}</h2>
         <p className="text-gray-400 text-sm flex items-center justify-center gap-2">
-          <Clock size={14} /> Laatste update: {data.lastUpdate}
+          <Radio size={14} /> {data.statusTopic}
         </p>
       </div>
 
-      {data.status === 'ALARM' && (
-        <button
-          onClick={onSnooze}
-          disabled={isSnoozed}
-          className={`w-full max-w-xs py-4 rounded-2xl flex items-center justify-center gap-3 text-lg font-bold shadow-lg transition-all active:scale-95
-            ${
-              isSnoozed
-                ? 'bg-orange-100 text-orange-400 border-2 border-orange-200 cursor-default'
-                : 'bg-[#E30059] text-white hover:bg-[#c4004d] hover:shadow-red-200 shadow-red-200'
-            }`}
-        >
-          {isSnoozed ? (
-            <>
-              <BellOff size={24} /> {formatTime(snoozeTime)}
-            </>
-          ) : (
-            <>
-              <BellOff size={24} /> Alarm Sluimeren
-            </>
-          )}
-        </button>
-      )}
+      <button
+        onClick={onServoAction}
+        disabled={servoLoading || isCoolingDown}
+        className={`w-full max-w-xs py-4 rounded-2xl flex items-center justify-center gap-3 text-lg font-bold shadow-lg transition-all active:scale-95 ${
+          servoLoading || isCoolingDown
+            ? 'bg-slate-100 text-slate-400 border-2 border-slate-200 cursor-not-allowed'
+            : 'bg-[#E30059] text-white hover:bg-[#c4004d] hover:shadow-red-200 shadow-red-200'
+        }`}
+      >
+        {servoLoading ? (
+          <span className="animate-spin h-5 w-5 border-2 border-current border-t-transparent rounded-full" />
+        ) : (
+          <Send size={22} />
+        )}
+        {isCoolingDown ? `Beschikbaar in ${formatTime(cooldownTime)}` : 'Servo aansturen'}
+      </button>
     </div>
   );
 }

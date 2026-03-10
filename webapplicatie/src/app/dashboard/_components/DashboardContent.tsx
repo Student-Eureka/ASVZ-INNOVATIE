@@ -1,9 +1,11 @@
-﻿import DashboardTable from './DashboardTable';
+import DashboardActivity from './DashboardActivity';
+import DashboardTable from './DashboardTable';
 import StatCard from './StatCard';
-import type { Pomp } from '../_types/dashboard';
+import type { DashboardEvent, Pomp } from '../_types/dashboard';
 
 interface DashboardContentProps {
   pompen: Pomp[];
+  events: DashboardEvent[];
   query: string;
   onQueryChange: (value: string) => void;
   stats: {
@@ -14,7 +16,13 @@ interface DashboardContentProps {
   };
 }
 
-export default function DashboardContent({ pompen, query, onQueryChange, stats }: DashboardContentProps) {
+export default function DashboardContent({
+  pompen,
+  events,
+  query,
+  onQueryChange,
+  stats,
+}: DashboardContentProps) {
   return (
     <section className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
@@ -38,6 +46,8 @@ export default function DashboardContent({ pompen, query, onQueryChange, stats }
           <DashboardTable pompen={pompen} />
         </div>
       </div>
+
+      <DashboardActivity events={events} />
     </section>
   );
 }

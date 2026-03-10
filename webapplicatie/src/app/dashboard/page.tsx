@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
@@ -6,47 +6,61 @@ import { useEffect, useMemo, useState } from 'react';
 import AppSidebar from '../_components/AppSidebar';
 import DashboardContent from './_components/DashboardContent';
 import DashboardHeader from './_components/DashboardHeader';
-import type { Pomp } from './_types/dashboard';
+import type { DashboardEvent, Pomp } from './_types/dashboard';
 
 export default function DashboardPage() {
   const router = useRouter();
   const [pompen, setPompen] = useState<Pomp[]>([]);
+  const [events, setEvents] = useState<DashboardEvent[]>([]);
   const [statusText, setStatusText] = useState('Wachten op data...');
   const [q, setQ] = useState('');
 
   useEffect(() => {
     let active = true;
 
-    async function fetchPompen() {
+    async function fetchDashboardData() {
       try {
-        const res = await fetch('/api/pompen', { cache: 'no-store' });
-        const data = await res.json();
+        const [pompenRes, eventsRes] = await Promise.all([
+          fetch('/api/pompen', { cache: 'no-store' }),
+          fetch('/api/pompen/events', { cache: 'no-store' }),
+        ]);
 
-        if (!Array.isArray(data)) {
-          console.error('Pompen API returned not an array:', data);
-          if (active) setPompen([]);
+        const pompenData = (await pompenRes.json()) as unknown;
+        const eventsData = (await eventsRes.json()) as unknown;
+
+        if (!Array.isArray(pompenData) || !Array.isArray(eventsData)) {
+          console.error('Dashboard API returned invalid data', { pompenData, eventsData });
+          if (active) {
+            setPompen([]);
+            setEvents([]);
+            setStatusText('Geen geldige data');
+          }
           return;
         }
 
         if (active) {
           setPompen(
-            data.map((p: Pomp) => ({
+            pompenData.map((p: Pomp) => ({
               ...p,
               uniqueId: `${p.woning}_${p.id}`,
               status: p.status || 'inactief',
             }))
           );
+          setEvents((eventsData as DashboardEvent[]).slice(0, 6));
           setStatusText('Live data');
         }
       } catch (err) {
-        console.error('Fout bij laden pompen:', err);
-        if (active) setPompen([]);
-        if (active) setStatusText('Verbinding mislukt');
+        console.error('Fout bij laden dashboard:', err);
+        if (active) {
+          setPompen([]);
+          setEvents([]);
+          setStatusText('Verbinding mislukt');
+        }
       }
     }
 
-    fetchPompen();
-    const interval = setInterval(fetchPompen, 3000);
+    fetchDashboardData();
+    const interval = setInterval(fetchDashboardData, 3000);
 
     return () => {
       active = false;
@@ -89,6 +103,7 @@ export default function DashboardPage() {
         </div>
         <DashboardContent
           pompen={filteredPompen}
+          events={events}
           query={q}
           onQueryChange={setQ}
           stats={stats}

@@ -1,11 +1,10 @@
-﻿import type { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 export type TopicId =
   | 'login'
   | 'dashboard'
   | 'select-pomp'
   | 'pomp'
-  | 'logboek'
   | 'waarom'
   | 'architectuur';
 

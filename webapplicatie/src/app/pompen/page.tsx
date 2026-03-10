@@ -1,6 +1,6 @@
-﻿'use client';
+'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import AppSidebar from '../_components/AppSidebar';
@@ -8,56 +8,106 @@ import PompenHeader from './_components/PompenHeader';
 import PompenList from './_components/PompenList';
 import PompenSearch from './_components/PompenSearch';
 import PompenSideExtras from './_components/PompenSideExtras';
-import { POMPEN } from './_data/pompen';
+import { mapPompenToItems } from './_data/pompen';
+import type { PompApiRecord, PompItem } from './_types/pompen';
 
 export default function PompenOverzichtPage() {
   const router = useRouter();
+  const [items, setItems] = useState<PompItem[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusText, setStatusText] = useState('Wachten op data...');
+
+  useEffect(() => {
+    let active = true;
+
+    async function fetchPompen() {
+      try {
+        const res = await fetch('/api/pompen', { cache: 'no-store' });
+        const data = (await res.json()) as unknown;
+
+        if (!Array.isArray(data)) {
+          if (active) {
+            setItems([]);
+            setStatusText('Geen geldige data');
+          }
+          return;
+        }
+
+        if (active) {
+          setItems(mapPompenToItems(data as PompApiRecord[]));
+          setStatusText('Live data');
+        }
+      } catch (error) {
+        console.error('Fout bij laden pompen:', error);
+        if (active) {
+          setItems([]);
+          setStatusText('Verbinding mislukt');
+        }
+      }
+    }
+
+    fetchPompen();
+    const interval = setInterval(fetchPompen, 3000);
+
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, []);
 
   const filteredPompen = useMemo(() => {
-    const term = searchTerm.toLowerCase();
-    return POMPEN.filter(
-      (pomp) =>
-        pomp.name.toLowerCase().includes(term) ||
-        pomp.location.toLowerCase().includes(term)
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) {
+      return items;
+    }
+
+    return items.filter((pomp) =>
+      [pomp.name, pomp.location, pomp.id, pomp.woning, String(pomp.status)].some((value) =>
+        value.toLowerCase().includes(term)
+      )
     );
-  }, [searchTerm]);
+  }, [items, searchTerm]);
 
   return (
-    <div className="min-h-screen bg-[#E30059] font-sans flex flex-col">
-      <PompenHeader />
+    <main className="min-h-screen bg-[#E5007D]">
+      <PompenHeader statusText={statusText} />
 
-      <div className="flex-1 px-0 md:px-8 pb-0 md:pb-8 flex flex-col md:flex-row gap-0 md:gap-8 overflow-hidden">
-        <div className="hidden md:block w-64 shrink-0 py-2">
+      <div className="max-w-6xl mx-auto px-6 py-6 grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
+        <div className="hidden lg:block">
           <AppSidebar>
             <PompenSideExtras />
           </AppSidebar>
         </div>
 
-        <div className="flex-1 flex flex-col gap-4 md:gap-6 overflow-hidden bg-[#F8F9FA] rounded-t-3xl md:rounded-[40px] shadow-2xl p-4 md:p-8 relative">
-          <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4 pb-2">
-            <div>
-              <h2 className="text-2xl md:text-3xl font-bold text-gray-800">
-                Actieve Pompen
-              </h2>
-              <p className="text-gray-500 text-sm mt-1">
-                Beheer status per woning
-              </p>
+        <section className="space-y-6">
+          <div className="rounded-3xl bg-white border border-slate-200 shadow-sm overflow-hidden">
+            <div className="p-5 border-b border-slate-200 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-semibold text-slate-900">Actieve pompen</h2>
+                <p className="text-sm text-slate-500">
+                  Overzicht van pompen met de laatst ontvangen MQTT-status.
+                </p>
+              </div>
+
+              <PompenSearch value={searchTerm} onChange={setSearchTerm} />
             </div>
 
-            <PompenSearch value={searchTerm} onChange={setSearchTerm} />
-          </div>
+            <div className="hidden md:grid grid-cols-12 px-10 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider border-b border-slate-100">
+              <div className="col-span-4">Locatie</div>
+              <div className="col-span-3">Status</div>
+              <div className="col-span-3">Laatste update</div>
+              <div className="col-span-2 text-right">Actie</div>
+            </div>
 
-          <div className="hidden md:grid grid-cols-12 px-6 text-xs font-bold text-gray-400 uppercase tracking-wider">
-            <div className="col-span-4">Locatie</div>
-            <div className="col-span-3">Status</div>
-            <div className="col-span-3">Batterij</div>
-            <div className="col-span-2 text-right">Actie</div>
+            <div className="p-5">
+              <PompenList
+                items={filteredPompen}
+                onSelect={(id) => router.push(`/pompen/${id}`)}
+              />
+            </div>
           </div>
-
-          <PompenList items={filteredPompen} onSelect={(id) => router.push(`/pompen/${id}`)} />
-        </div>
+        </section>
       </div>
-    </div>
+    </main>
   );
 }

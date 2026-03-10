@@ -1,7 +1,8 @@
-﻿import { LayoutDashboard, Settings } from 'lucide-react';
+import type { ReactNode } from 'react';
+import { LayoutDashboard, Settings } from 'lucide-react';
 
 interface SidebarItemProps {
-  icon: React.ReactNode;
+  icon: ReactNode;
   label: string;
   active?: boolean;
 }

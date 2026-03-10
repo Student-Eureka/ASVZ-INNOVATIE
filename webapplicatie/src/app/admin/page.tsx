@@ -1,14 +1,15 @@
-﻿'use client';
+'use client';
 
+import Image from 'next/image';
 import { useEffect, useMemo, useState } from 'react';
 
 import AppSidebar from '../_components/AppSidebar';
 import AddUserModal from './_components/AddUserModal';
 import AdminNav from './_components/AdminNav';
+import { DEFAULT_RULES } from './_data/rules';
 import StatCard from './_components/StatCard';
 import UsersSection from './_components/UsersSection';
 import type { NavId, Role, UserRow } from './_types/admin';
-import { DEFAULT_RULES } from './_data/rules';
 
 export default function AdminPanelPage() {
   const [nav, setNav] = useState<NavId>('users');
@@ -67,10 +68,7 @@ export default function AdminPanelPage() {
       });
       if (!res.ok) throw new Error('Kon gebruiker niet toevoegen');
       const newUser = await res.json();
-      setUsers((prev) => [
-        { id: newUser.id, name, email, role, lastLogin: '—' },
-        ...prev,
-      ]);
+      setUsers((prev) => [{ id: newUser.id, name, email, role, lastLogin: '—' }, ...prev]);
       setShowAdd(false);
     } catch (err) {
       console.error(err);
@@ -97,7 +95,7 @@ export default function AdminPanelPage() {
       <header className="sticky top-0 z-20 bg-white/90 border-b border-slate-200 backdrop-blur">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <img src="/logo.svg" alt="ASVZ logo" className="w-9 h-9 object-contain" />
+            <Image src="/logo.svg" alt="ASVZ logo" width={36} height={36} className="w-9 h-9 object-contain" />
             <div>
               <h1 className="text-lg font-semibold text-slate-900">Admin Panel</h1>
               <p className="text-xs text-slate-500">Users & toegang beheren</p>
@@ -117,10 +115,7 @@ export default function AdminPanelPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <StatCard label="Admins" value={String(stats.admins)} />
             <StatCard label="Users" value={String(stats.normal)} />
-            <StatCard
-              label="Geblokkeerd voor user"
-              value={String(stats.lockedForUser)}
-            />
+            <StatCard label="Geblokkeerd voor user" value={String(stats.lockedForUser)} />
           </div>
 
           {nav === 'users' && (
@@ -136,9 +131,7 @@ export default function AdminPanelPage() {
         </section>
       </div>
 
-      {showAdd && (
-        <AddUserModal onClose={() => setShowAdd(false)} onSubmit={addUser} />
-      )}
+      {showAdd && <AddUserModal onClose={() => setShowAdd(false)} onSubmit={addUser} />}
     </main>
   );
 }
