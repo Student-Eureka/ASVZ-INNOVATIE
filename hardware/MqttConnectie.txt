@@ -5,24 +5,31 @@ import _thread
 from umqtt.simple import MQTTClient
 
 # ====== Config ======
+# WiFi-instellingen van het lokale netwerk.
 WIFI_SSID = "Eureka_wifi"
 WIFI_PASSWORD = "EurekaEigenWifi"
 
+# MQTT broker en inloggegevens.
 MQTT_BROKER = "10.1.1.121"
 MQTT_PORT = 1883
 MQTT_USER = "asvzmqtt"
 MQTT_PASSWORD = "asvzmqtt"
 
+# Unieke client-id zodat de broker deze Pico W kan herkennen.
 CLIENT_ID = "pico_w_01"
 
+# Topic-opbouw: asvz/<woning>/<pomp>/status
 WONING = "woning_a"
 POMP = "pomp_3"
 STATUS_TOPIC = f"asvz/{WONING}/{POMP}/status"
 
+# Na 2 minuten zonder "actief" input schakelt het script terug naar rust.
 IDLE_SECONDS = 120  # 2 minuten
+# Heartbeat houdt de laatst bekende status actief op de broker.
 HEARTBEAT_SECONDS = 5
 # ====================
 
+# Gedeelde status tussen de hoofdloop en de input-thread.
 last_active_ms = 0
 current_status = "rust"
 last_publish_ms = 0
@@ -37,6 +44,7 @@ def wifi_connect(timeout_s=20):
         wlan.connect(WIFI_SSID, WIFI_PASSWORD)
         start = time.time()
         while not wlan.isconnected():
+            # Stop als verbinden te lang duurt, zodat het script niet blijft hangen.
             if time.time() - start > timeout_s:
                 print("[wifi] ERROR: timeout")
                 return None
@@ -56,6 +64,7 @@ def mqtt_connect():
             password=MQTT_PASSWORD,
             keepalive=60
         )
+        # Een connectie voor alle statusberichten van deze Pico W.
         client.connect()
         print("[mqtt] connected")
         return client
@@ -65,6 +74,7 @@ def mqtt_connect():
 
 def publish_status(client, status):
     try:
+        # retain=True zorgt dat nieuwe subscribers direct de laatste status zien.
         client.publish(STATUS_TOPIC, status.encode(), retain=True)
         print(f"[mqtt] status => {status}")
     except Exception as e:
@@ -74,6 +84,7 @@ def input_thread(client):
     global last_active_ms, current_status
     while True:
         try:
+            # Verwacht handmatige input via serial console: "actief" of "rust".
             line = input().strip().lower()
         except Exception as e:
             print("[input] ERROR:", e)
@@ -84,6 +95,7 @@ def input_thread(client):
             with lock:
                 current_status = line
                 if line == "actief":
+                    # Alleen "actief" ververst de activity-timer.
                     last_active_ms = time.ticks_ms()
             publish_status(client, line)
             print(f"[input] command => {line}")
@@ -101,6 +113,7 @@ def main():
     _thread.start_new_thread(input_thread, (client,))
 
     with lock:
+        # Start altijd vanuit rust zodat de initiele brokerstatus eenduidig is.
         last_active_ms = time.ticks_ms()
         current_status = "rust"
     publish_status(client, "rust")
@@ -116,13 +129,13 @@ def main():
             status = current_status
             idle_ms = time.ticks_diff(now, last_active_ms)
 
-        # Auto terug naar rust
+        # Zet status automatisch terug naar rust na te lange inactiviteit.
         if status == "actief" and idle_ms > IDLE_SECONDS * 1000:
             with lock:
                 current_status = "rust"
             publish_status(client, "rust")
 
-        # Heartbeat (elke 5s opnieuw publishen)
+        # Publiceer periodiek opnieuw zodat monitors weten dat het device nog leeft.
         if time.ticks_diff(now, last_publish_ms) > HEARTBEAT_SECONDS * 1000:
             with lock:
                 status = current_status

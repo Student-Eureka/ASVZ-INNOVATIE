@@ -1,36 +1,42 @@
 from machine import Pin, ADC, PWM
 import time
 
-# microfoon
+# Analoge microfoon op ADC pin 26.
 mic = ADC(26)
 
-# servo
+# Servo op GPIO15 met 50Hz PWM, standaard voor hobbyservo's.
 servo = PWM(Pin(15))
 servo.freq(50)
 
+# Boven deze waarde behandelen we het signaal als een piep.
 THRESHOLD = 62000
 
 def set_angle(angle):
+    # Zet graden om naar een pulsbreedte tussen 0.5ms en 2.5ms.
     min_us = 500
     max_us = 2500
     pulse = min_us + (max_us - min_us) * angle / 180
+    # MicroPython verwacht duty_u16 als 16-bit waarde over een periode van 20ms.
     duty = int(pulse / 20000 * 65535)
     servo.duty_u16(duty)
 
 print("Start geluid test")
 
 while True:
-
+    # Lees ruwe 16-bit ADC-waarde van de microfoon.
     value = mic.read_u16()
     print("Mic waarde:", value)
 
     if value > THRESHOLD:
         print("PIEP GEDETECTEERD")
 
+        # Beweeg kort naar open/actieve stand.
         set_angle(120)
         time.sleep(1)
 
+        # Ga daarna terug naar ruststand.
         set_angle(20)
         time.sleep(1)
 
+    # Kleine polling-pauze om CPU-gebruik en ruis te beperken.
     time.sleep(0.1)
