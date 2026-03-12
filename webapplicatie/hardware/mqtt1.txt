@@ -1,0 +1,36 @@
+from machine import Pin, ADC, PWM
+import time
+
+# microfoon
+mic = ADC(26)
+
+# servo
+servo = PWM(Pin(15))
+servo.freq(50)
+
+THRESHOLD = 62000
+
+def set_angle(angle):
+    min_us = 500
+    max_us = 2500
+    pulse = min_us + (max_us - min_us) * angle / 180
+    duty = int(pulse / 20000 * 65535)
+    servo.duty_u16(duty)
+
+print("Start geluid test")
+
+while True:
+
+    value = mic.read_u16()
+    print("Mic waarde:", value)
+
+    if value > THRESHOLD:
+        print("PIEP GEDETECTEERD")
+
+        set_angle(120)
+        time.sleep(1)
+
+        set_angle(20)
+        time.sleep(1)
+
+    time.sleep(0.1)
