@@ -64,6 +64,12 @@ SERVO_MQTT_PASS=
 SERVO_MQTT_REJECT_UNAUTHORIZED=
 ```
 
+Invulhulp:
+- `MQTT_BROKER_URL` → `mqtt://<broker-ip>:1883`
+- `MQTT_USER`/`MQTT_PASS` → de user/pass die je bij Mosquitto hebt aangemaakt
+- `SERVO_MQTT_PROTOCOL` → meestal `mqtt`
+- `SERVO_MQTT_REJECT_UNAUTHORIZED` → `false` als je geen TLS gebruikt
+
 ## 7. Testen (handmatig)
 Gebruik bijv. `mosquitto_pub` en `mosquitto_sub`:
 
@@ -75,6 +81,8 @@ mosquitto_sub -h <broker> -t "asvz/+/+/status" -u <user> -P <pass>
 mosquitto_pub -h <broker> -t "asvz/woning_a/pomp_1/set" -m "SWEEP" -u <user> -P <pass>
 ```
 
+Let op: waar `<...>` staat moet je **zelf iets invullen**.
+
 ## 8. Open punten
 - QoS‑niveau bepalen
 - Retained messages evalueren
@@ -82,7 +90,7 @@ mosquitto_pub -h <broker> -t "asvz/woning_a/pomp_1/set" -m "SWEEP" -u <user> -P 
 - Broker persistence configureren
 
 ## Ubuntu installatie
-Zie `INSTALL_UBUNTU.md` voor de volledige handleiding.
+Zie `INSTALL_MQTT.md` voor de volledige handleiding.
 
 Snelle setup via script:
 ```bash

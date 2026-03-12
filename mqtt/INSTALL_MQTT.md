@@ -2,6 +2,7 @@
 
 Dit document legt uit hoe je Mosquitto (MQTT broker) installeert, configureert en test op een Ubuntu server.
 Het is bedoeld voor herstel na een server‑uitval.
+Let op: waar `<...>` staat moet je **zelf iets invullen** (bijv. `<BROKER_IP>`).
 
 ## 1. Benodigdheden
 - Ubuntu 20.04/22.04/24.04
@@ -66,6 +67,11 @@ Het script vraagt om:
 Na afloop draait de broker op:
 - TCP **1883**
 - WebSocket **9001**
+
+Daarna .env bijwerken in de webapp:
+- `MQTT_BROKER_URL`
+- `MQTT_USER`
+- `MQTT_PASS`
 
 ---
 

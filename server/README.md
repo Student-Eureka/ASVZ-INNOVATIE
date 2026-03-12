@@ -50,6 +50,37 @@ sudo bash /opt/asvz/server/deploy_db_ubuntu.sh
 
 Script verwacht dat de repo al staat in `/opt/asvz` en dat
 `/opt/asvz/webapplicatie/db/asvz_db.sql` bestaat.
+Gebruik je een andere map, vul die in bij de prompt `Repo target dir`.
+
+Wat vul je in bij `Repo target dir`?
+- Dit is de **hoofdmap van de repo op de server**.
+- Voorbeeld: staat je repo in `/opt/asvz-webapp`, dan vul je **`/opt/asvz-webapp`** in.
+- Daarna verwacht het script het SQL‑bestand hier:  
+  `/opt/asvz-webapp/webapplicatie/db/asvz_db.sql`
+
+---
+
+### 2.2 Database user voor productie (aanbevolen)
+Waarom:
+- `root` heeft **alle** rechten. Als de webapp ooit lekt, heeft een aanvaller meteen volledige database‑toegang.
+- Een eigen user beperkt de schade tot alleen `asvz_db`.
+
+Hoe (aanmaken + rechten geven):
+```bash
+sudo mysql
+```
+```sql
+CREATE USER 'asvz_app'@'localhost' IDENTIFIED BY 'SterkWachtwoord';
+GRANT ALL PRIVILEGES ON asvz_db.* TO 'asvz_app'@'localhost';
+FLUSH PRIVILEGES;
+```
+
+Daarna in `.env`:
+```
+DB_USER=asvz_app
+DB_PASS=SterkWachtwoord
+DB_NAME=asvz_db
+```
 
 ---
 
@@ -74,6 +105,7 @@ pm2 -v
 ---
 
 ## 5. Project deployen
+Let op: waar `<...>` staat moet je **zelf iets invullen**. Voorbeeld: `<REPO_URL>` → `https://github.com/jouw-org/jouw-repo.git`.
 
 ```bash
 cd /opt
@@ -114,6 +146,20 @@ SERVO_MQTT_USER=
 SERVO_MQTT_PASS=
 SERVO_MQTT_REJECT_UNAUTHORIZED=
 ```
+
+Invulhulp:
+- `DB_HOST` → meestal `localhost`
+- `DB_PORT` → meestal `3306`
+- `DB_USER`/`DB_PASS` → MySQL login
+- `DB_NAME` → standaard `asvz_db`
+- `HOST` → `0.0.0.0` om extern te luisteren
+- `PORT` → standaard `3000`
+- `MQTT_BROKER_URL` → `mqtt://<broker-ip>:1883`
+- `SERVO_MQTT_PROTOCOL` → meestal `mqtt`
+- `SERVO_MQTT_REJECT_UNAUTHORIZED` → `false` als je geen TLS gebruikt
+
+Belangrijk bij MQTT install:
+- Update `.env` met `MQTT_BROKER_URL`, `MQTT_USER`, `MQTT_PASS`.
 
 ---
 
@@ -170,6 +216,8 @@ server {
     }
 }
 ```
+
+Vervang `<YOUR_DOMAIN_OR_IP>` door je domein of server‑IP.
 
 Herstart Nginx:
 
