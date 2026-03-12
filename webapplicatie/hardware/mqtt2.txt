@@ -1,0 +1,136 @@
+# main.py (MicroPython - Raspberry Pi Pico W)
+import time
+import network
+import _thread
+from umqtt.simple import MQTTClient
+
+# ====== Config ======
+WIFI_SSID = "Eureka_wifi"
+WIFI_PASSWORD = "EurekaEigenWifi"
+
+MQTT_BROKER = "10.1.1.121"
+MQTT_PORT = 1883
+MQTT_USER = "asvzmqtt"
+MQTT_PASSWORD = "asvzmqtt"
+
+CLIENT_ID = "pico_w_01"
+
+WONING = "woning_a"
+POMP = "pomp_3"
+STATUS_TOPIC = f"asvz/{WONING}/{POMP}/status"
+
+IDLE_SECONDS = 120  # 2 minuten
+HEARTBEAT_SECONDS = 5
+# ====================
+
+last_active_ms = 0
+current_status = "rust"
+last_publish_ms = 0
+lock = _thread.allocate_lock()
+
+def wifi_connect(timeout_s=20):
+    print("[wifi] connecting...")
+    wlan = network.WLAN(network.STA_IF)
+    wlan.active(True)
+
+    if not wlan.isconnected():
+        wlan.connect(WIFI_SSID, WIFI_PASSWORD)
+        start = time.time()
+        while not wlan.isconnected():
+            if time.time() - start > timeout_s:
+                print("[wifi] ERROR: timeout")
+                return None
+            time.sleep(0.5)
+
+    print("[wifi] connected:", wlan.ifconfig())
+    return wlan
+
+def mqtt_connect():
+    print("[mqtt] connecting...")
+    try:
+        client = MQTTClient(
+            client_id=CLIENT_ID,
+            server=MQTT_BROKER,
+            port=MQTT_PORT,
+            user=MQTT_USER,
+            password=MQTT_PASSWORD,
+            keepalive=60
+        )
+        client.connect()
+        print("[mqtt] connected")
+        return client
+    except Exception as e:
+        print("[mqtt] ERROR:", e)
+        return None
+
+def publish_status(client, status):
+    try:
+        client.publish(STATUS_TOPIC, status.encode(), retain=True)
+        print(f"[mqtt] status => {status}")
+    except Exception as e:
+        print("[mqtt] publish ERROR:", e)
+
+def input_thread(client):
+    global last_active_ms, current_status
+    while True:
+        try:
+            line = input().strip().lower()
+        except Exception as e:
+            print("[input] ERROR:", e)
+            time.sleep(1)
+            continue
+
+        if line in ("actief", "rust"):
+            with lock:
+                current_status = line
+                if line == "actief":
+                    last_active_ms = time.ticks_ms()
+            publish_status(client, line)
+            print(f"[input] command => {line}")
+
+def main():
+    global last_active_ms, current_status, last_publish_ms
+
+    if not wifi_connect():
+        return
+
+    client = mqtt_connect()
+    if not client:
+        return
+
+    _thread.start_new_thread(input_thread, (client,))
+
+    with lock:
+        last_active_ms = time.ticks_ms()
+        current_status = "rust"
+    publish_status(client, "rust")
+    last_publish_ms = time.ticks_ms()
+
+    print("Typ 'actief' om actief te zetten.")
+    print("Na 2 minuten zonder input => rust.")
+
+    while True:
+        now = time.ticks_ms()
+
+        with lock:
+            status = current_status
+            idle_ms = time.ticks_diff(now, last_active_ms)
+
+        # Auto terug naar rust
+        if status == "actief" and idle_ms > IDLE_SECONDS * 1000:
+            with lock:
+                current_status = "rust"
+            publish_status(client, "rust")
+
+        # Heartbeat (elke 5s opnieuw publishen)
+        if time.ticks_diff(now, last_publish_ms) > HEARTBEAT_SECONDS * 1000:
+            with lock:
+                status = current_status
+            publish_status(client, status)
+            last_publish_ms = now
+
+        time.sleep(0.2)
+
+if __name__ == "__main__":
+    main()
+
