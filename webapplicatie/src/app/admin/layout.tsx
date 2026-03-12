@@ -4,9 +4,12 @@ import { redirect } from 'next/navigation';
 import { requireAdminByToken } from '@/core/auth/session';
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const token = cookies().get('session')?.value ?? null;
+  // Server-side guard voor /admin zodat alleen admins toegang krijgen.
+  const cookieStore = await cookies();
+  const token = cookieStore.get('session')?.value ?? null;
 
   try {
+    // Admin-only guard voor de volledige /admin route.
     await requireAdminByToken(token);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'NOT_ADMIN';

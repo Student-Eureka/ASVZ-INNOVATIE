@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
   try {
     const token = req.cookies.get('session')?.value ?? null;
     const user = await requireAdminByToken(token);
-    const data = await getDiscoveredPompenForWoning(user.woning_code);
+    const data = await getDiscoveredPompenForWoning(user.woning_id);
     return NextResponse.json(data);
   } catch (err) {
     return NextResponse.json(
@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
 
     const result = await registerDiscoveredPomp({
       ownerId: user.woning_id,
-      woningCode: user.woning_code,
+      woningId: user.woning_id,
       pompId,
     });
 

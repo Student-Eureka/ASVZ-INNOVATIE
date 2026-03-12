@@ -13,7 +13,7 @@ export default function UsersTable({ users, onEdit, onDelete }: UsersTableProps)
       <thead>
         <tr className="text-left text-xs text-slate-500">
           <th className="py-2">Naam</th>
-          <th className="py-2">Woning</th>
+          <th className="py-2">Woning ID</th>
           <th className="py-2">Rol</th>
           <th className="py-2">Laatste login</th>
           <th className="py-2 text-right">Actie</th>
@@ -23,7 +23,7 @@ export default function UsersTable({ users, onEdit, onDelete }: UsersTableProps)
         {users.map((u) => (
           <tr key={u.id} className="border-t border-slate-200">
             <td className="py-3 font-semibold">{u.name}</td>
-            <td className="py-3 font-medium text-slate-500">{u.woningCode}</td>
+            <td className="py-3 font-medium text-slate-500">{u.woningId}</td>
             <td className="py-3">
               <div className="flex items-center gap-2">
                 <RolePill role={u.role} />

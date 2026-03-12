@@ -84,6 +84,8 @@ function setPompRecord(params: {
   const uniqueId = buildUniqueId(params.woning, params.pompId);
   const normalizedStatus = normalizeStatus(params.status);
   const statusTopic = params.topic ?? buildStatusTopic(params.woning, params.pompId);
+  const previous = pompen.get(uniqueId);
+  const statusChanged = !previous || previous.status !== normalizedStatus;
 
   pompen.set(uniqueId, {
     uniqueId,
@@ -95,16 +97,18 @@ function setPompRecord(params: {
     commandTopic: buildCommandTopic(params.woning, params.pompId),
   });
 
-  pushLogEntry({
-    uniqueId,
-    pompId: params.pompId,
-    woning: params.woning,
-    kind: 'status',
-    status: normalizedStatus,
-    message: `Status bijgewerkt naar ${normalizedStatus}`,
-    createdAt: receivedAt,
-    topic: statusTopic,
-  });
+  if (statusChanged) {
+    pushLogEntry({
+      uniqueId,
+      pompId: params.pompId,
+      woning: params.woning,
+      kind: 'status',
+      status: normalizedStatus,
+      message: `Status bijgewerkt naar ${normalizedStatus}`,
+      createdAt: receivedAt,
+      topic: statusTopic,
+    });
+  }
 }
 
 export function getPompenSnapshot(): PompRecord[] {

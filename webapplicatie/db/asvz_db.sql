@@ -29,9 +29,7 @@ SET time_zone = "+00:00";
 
 CREATE TABLE `woningen` (
   `woning_id` int(11) NOT NULL,
-  `woning_code` varchar(100) NOT NULL,
   `gebruikersnaam` varchar(100) NOT NULL,
-  `email` varchar(190) DEFAULT NULL,
   `wachtwoord` varchar(255) NOT NULL,
   `rol` enum('admin','user') NOT NULL DEFAULT 'user',
   `last_login` datetime DEFAULT NULL
@@ -46,7 +44,6 @@ CREATE TABLE `woningen` (
 CREATE TABLE `pompen` (
   `id` int(11) NOT NULL,
   `woning_id` int(11) NOT NULL,
-  `woning_code` varchar(100) NOT NULL,
   `pomp_code` varchar(100) NOT NULL,
   `status` enum('Inactief','Rust','Actief') DEFAULT 'Inactief',
   `laatste_update` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
@@ -76,8 +73,7 @@ CREATE TABLE `sessions` (
 
 ALTER TABLE `woningen`
   ADD PRIMARY KEY (`woning_id`),
-  ADD UNIQUE KEY `gebruikersnaam` (`gebruikersnaam`),
-  ADD KEY `idx_woningen_woning_code` (`woning_code`);
+  ADD UNIQUE KEY `gebruikersnaam` (`gebruikersnaam`);
 
 --
 -- Indexen voor tabel `pompen`
@@ -85,9 +81,8 @@ ALTER TABLE `woningen`
 
 ALTER TABLE `pompen`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `unique_woning_pomp` (`woning_code`,`pomp_code`),
-  ADD KEY `fk_pompen_woningen` (`woning_id`),
-  ADD KEY `idx_pompen_woning_code` (`woning_code`);
+  ADD UNIQUE KEY `unique_woning_pomp` (`woning_id`,`pomp_code`),
+  ADD KEY `fk_pompen_woningen` (`woning_id`);
 
 --
 -- Indexen voor tabel `sessions`

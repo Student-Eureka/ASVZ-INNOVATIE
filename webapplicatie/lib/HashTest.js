@@ -12,16 +12,16 @@ async function createUsers() {
   });
 
   const users = [
-    { gebruikersnaam: "root", wachtwoord: "admin", rol: "admin", woning_code: "woning_a" },
-    { gebruikersnaam: "test", wachtwoord: "Touwbaan15", rol: "user", woning_code: "woning_b" }
+    { gebruikersnaam: "root", wachtwoord: "admin", rol: "admin" },
+    { gebruikersnaam: "test", wachtwoord: "Touwbaan15", rol: "user" }
   ];
 
   for (const user of users) {
     const hash = await bcrypt.hash(user.wachtwoord, 12);
 
     await db.query(
-      "INSERT INTO woningen (woning_code, gebruikersnaam, wachtwoord, rol) VALUES (?, ?, ?, ?)",
-      [user.woning_code, user.gebruikersnaam, hash, user.rol]
+      "INSERT INTO woningen (gebruikersnaam, wachtwoord, rol) VALUES (?, ?, ?)",
+      [user.gebruikersnaam, hash, user.rol]
     );
 
     console.log(`User ${user.gebruikersnaam} aangemaakt`);

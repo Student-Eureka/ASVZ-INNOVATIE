@@ -4,7 +4,6 @@ import type { UserRow } from '../_types/admin';
 interface UsersSectionProps {
   users: UserRow[];
   q: string;
-  tenantLabel: string;
   onQueryChange: (value: string) => void;
   onEdit: (user: UserRow) => void;
   onDelete: (id: string) => void;
@@ -14,7 +13,6 @@ interface UsersSectionProps {
 export default function UsersSection({
   users,
   q,
-  tenantLabel,
   onQueryChange,
   onEdit,
   onDelete,
@@ -25,9 +23,7 @@ export default function UsersSection({
       <div className="p-5 border-b border-slate-200 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold text-slate-900">Gebruikers</h2>
-          <p className="text-sm text-slate-500">
-            Accounts binnen {tenantLabel || 'de huidige woning'}.
-          </p>
+          <p className="text-sm text-slate-500">Accounts uit de database.</p>
         </div>
 
         <div className="flex flex-col md:flex-row gap-3">

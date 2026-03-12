@@ -17,8 +17,8 @@ function isRole(value: string): value is Role {
   return value === 'user' || value === 'admin';
 }
 
-export async function getUsers(woningCode: string) {
-  return getUsersList(woningCode);
+export async function getUsers() {
+  return getUsersList();
 }
 
 export async function createUser(
@@ -26,14 +26,13 @@ export async function createUser(
     name?: unknown;
     password?: unknown;
     role?: unknown;
-  },
-  woningCode: string
+  }
 ) {
   const cleanName = String(payload.name ?? '').trim();
   const cleanRole = String(payload.role ?? '').trim();
   const cleanPassword = String(payload.password ?? '');
 
-  if (!cleanName || !cleanPassword || !isRole(cleanRole) || !woningCode) {
+  if (!cleanName || !cleanPassword || !isRole(cleanRole)) {
     return { success: false, status: 400, message: 'Ongeldige input' };
   }
 
@@ -43,12 +42,12 @@ export async function createUser(
   }
 
   const hashedPassword = await bcrypt.hash(cleanPassword, SALT_ROUNDS);
-  const result = await createUserRecord(woningCode, cleanName, hashedPassword, cleanRole);
+  const result = await createUserRecord(cleanName, hashedPassword, cleanRole);
 
   return { success: true, status: 200, id: result.insertId };
 }
 
-export async function deleteUser(payload: { id?: unknown }, viewer: { id: string; woningCode: string }) {
+export async function deleteUser(payload: { id?: unknown }, viewer: { id: string }) {
   if (!payload.id) {
     return { success: false, status: 400, message: 'Geen id opgegeven' };
   }
@@ -59,11 +58,11 @@ export async function deleteUser(payload: { id?: unknown }, viewer: { id: string
   }
 
   const target = await getUserById(targetId);
-  if (!target.length || target[0].woning_code !== viewer.woningCode) {
+  if (!target.length) {
     return { success: false, status: 404, message: 'Gebruiker niet gevonden' };
   }
 
-  await deleteUserById(targetId, viewer.woningCode);
+  await deleteUserById(targetId);
   return { success: true, status: 200 };
 }
 
@@ -73,8 +72,7 @@ export async function updateUser(
     name?: unknown;
     role?: unknown;
     password?: unknown;
-  },
-  woningCode: string
+  }
 ) {
   if (!payload.id) {
     return { success: false, status: 400, message: 'Geen id opgegeven' };
@@ -82,7 +80,7 @@ export async function updateUser(
 
   const targetId = String(payload.id);
   const target = await getUserById(targetId);
-  if (!target.length || target[0].woning_code !== woningCode) {
+  if (!target.length) {
     return { success: false, status: 404, message: 'Gebruiker niet gevonden' };
   }
 
@@ -107,7 +105,7 @@ export async function updateUser(
     return { success: false, status: 400, message: 'Niets om te updaten' };
   }
 
-  await updateUserById(targetId, updates.join(', '), values, woningCode);
+  await updateUserById(targetId, updates.join(', '), values);
 
   return { success: true, status: 200 };
 }

@@ -7,9 +7,9 @@ import {
 } from '@/core/pompenStore';
 import {
   createRegisteredPompRecord,
-  getRegisteredPompByWoningAndCode,
-  getRegisteredPompIdsByWoningCode,
-  getRegisteredPompenByWoningCode,
+  getRegisteredPompByWoningAndId,
+  getRegisteredPompIdsByWoningId,
+  getRegisteredPompenByWoningId,
 } from '@/infra/pompRepo';
 import { getMqttClient } from '@/infra/mqttClient';
 
@@ -27,6 +27,10 @@ const announcedDiscoveredPompen = new Set<string>();
 
 function readString(value: unknown) {
   return typeof value === 'string' ? value.trim() : '';
+}
+
+function normalizePompId(value: string) {
+  return value.trim().toLowerCase();
 }
 
 function extractStatusPayload(body: unknown) {
@@ -58,12 +62,12 @@ function ensureMqttSubscription() {
   }
 }
 
-function buildStatusTopic(woningCode: string, pompId: string) {
-  return `asvz/${woningCode}/${pompId}/status`;
+function buildStatusTopic(woningId: string, pompId: string) {
+  return `asvz/${woningId}/${pompId}/status`;
 }
 
-function buildCommandTopic(woningCode: string, pompId: string) {
-  return `asvz/${woningCode}/${pompId}/set`;
+function buildCommandTopic(woningId: string, pompId: string) {
+  return `asvz/${woningId}/${pompId}/set`;
 }
 
 function toDbStatus(status: string): 'Inactief' | 'Rust' | 'Actief' {
@@ -93,23 +97,25 @@ function toApiStatus(status: string) {
   return normalized || 'inactief';
 }
 
-async function syncDiscoveredPompen(woningCode: string) {
-  const livePompen = getPompenSnapshot().filter((record) => record.woning === woningCode);
-  const registeredPumpIds = new Set(await getRegisteredPompIdsByWoningCode(woningCode));
+async function syncDiscoveredPompen(woningId: string) {
+  const livePompen = getPompenSnapshot().filter((record) => record.woning === woningId);
+  const registeredPumpIds = new Set(
+    (await getRegisteredPompIdsByWoningId(woningId)).map(normalizePompId)
+  );
 
   for (const pomp of livePompen) {
-    if (registeredPumpIds.has(pomp.id)) {
+    if (registeredPumpIds.has(normalizePompId(pomp.id))) {
       continue;
     }
 
-    const discoveryKey = `${woningCode}:${pomp.id}`;
+    const discoveryKey = `${woningId}:${pomp.id}`;
     if (announcedDiscoveredPompen.has(discoveryKey)) {
       continue;
     }
 
     announcedDiscoveredPompen.add(discoveryKey);
     recordPompInfo({
-      woning: woningCode,
+      woning: woningId,
       pompId: pomp.id,
       message: 'Pomp gevonden via MQTT en nog niet in database',
       topic: pomp.statusTopic,
@@ -117,73 +123,81 @@ async function syncDiscoveredPompen(woningCode: string) {
   }
 }
 
-export async function getPompenForWoning(woningCode: string) {
+export async function getPompenForWoning(woningId: string) {
   ensureMqttSubscription();
-  await syncDiscoveredPompen(woningCode);
+  await syncDiscoveredPompen(woningId);
 
-  const livePompen = getPompenSnapshot().filter((record) => record.woning === woningCode);
-  const livePompenById = new Map(livePompen.map((record) => [record.id, record]));
-  const registeredPompen = await getRegisteredPompenByWoningCode(woningCode);
+  const livePompen = getPompenSnapshot().filter((record) => record.woning === woningId);
+  const livePompenById = new Map(
+    livePompen.map((record) => [normalizePompId(record.id), record])
+  );
+  const registeredPompen = await getRegisteredPompenByWoningId(woningId);
 
   return registeredPompen.map((registered) => {
-    const live = livePompenById.get(registered.pompId);
+    const live = livePompenById.get(normalizePompId(registered.pompId));
 
     return {
-      uniqueId: `${woningCode}_${registered.pompId}`,
+      uniqueId: `${woningId}_${registered.pompId}`,
       id: registered.pompId,
-      woning: woningCode,
+      woning: woningId,
       status: live?.status ?? toApiStatus(registered.status),
       lastUpdate: live?.lastUpdate ?? registered.lastUpdate ?? registered.createdAt ?? '',
-      statusTopic: live?.statusTopic ?? buildStatusTopic(woningCode, registered.pompId),
-      commandTopic: live?.commandTopic ?? buildCommandTopic(woningCode, registered.pompId),
+      statusTopic: live?.statusTopic ?? buildStatusTopic(woningId, registered.pompId),
+      commandTopic: live?.commandTopic ?? buildCommandTopic(woningId, registered.pompId),
     };
   });
 }
 
-export async function getRegisteredPompEventsForWoning(woningCode: string) {
+export async function getRegisteredPompEventsForWoning(woningId: string) {
   ensureMqttSubscription();
-  await syncDiscoveredPompen(woningCode);
+  await syncDiscoveredPompen(woningId);
 
-  const registeredPumpIds = new Set(await getRegisteredPompIdsByWoningCode(woningCode));
+  const registeredPumpIds = new Set(
+    (await getRegisteredPompIdsByWoningId(woningId)).map(normalizePompId)
+  );
 
   return getPompLogSnapshot().filter(
-    (item) => item.woning === woningCode && registeredPumpIds.has(item.pompId)
+    (item) => item.woning === woningId && registeredPumpIds.has(normalizePompId(item.pompId))
   );
 }
 
-export async function getDiscoveredPompenForWoning(woningCode: string) {
+export async function getDiscoveredPompenForWoning(woningId: string) {
   ensureMqttSubscription();
-  await syncDiscoveredPompen(woningCode);
+  await syncDiscoveredPompen(woningId);
 
-  const livePompen = getPompenSnapshot().filter((record) => record.woning === woningCode);
-  const registeredPumpIds = new Set(await getRegisteredPompIdsByWoningCode(woningCode));
+  const livePompen = getPompenSnapshot().filter((record) => record.woning === woningId);
+  const registeredPumpIds = new Set(
+    (await getRegisteredPompIdsByWoningId(woningId)).map(normalizePompId)
+  );
 
-  return livePompen.filter((record) => !registeredPumpIds.has(record.id));
+  return livePompen.filter((record) => !registeredPumpIds.has(normalizePompId(record.id)));
 }
 
 export async function registerDiscoveredPomp(params: {
   ownerId: string;
-  woningCode: string;
+  woningId: string;
   pompId: string;
 }) {
   ensureMqttSubscription();
 
   const livePomp = getPompenSnapshot().find(
-    (record) => record.woning === params.woningCode && record.id === params.pompId
+    (record) =>
+      record.woning === params.woningId &&
+      normalizePompId(record.id) === normalizePompId(params.pompId)
   );
 
   if (!livePomp) {
     throw new Error('Pomp is niet live gevonden via MQTT');
   }
 
-  const existing = await getRegisteredPompByWoningAndCode(params.woningCode, params.pompId);
+  const existing = await getRegisteredPompByWoningAndId(params.woningId, params.pompId);
   if (existing) {
     return {
       alreadyExists: true,
       record: {
-        uniqueId: `${params.woningCode}_${params.pompId}`,
+        uniqueId: `${params.woningId}_${params.pompId}`,
         id: params.pompId,
-        woning: params.woningCode,
+        woning: params.woningId,
         status: livePomp.status,
         lastUpdate: livePomp.lastUpdate,
         statusTopic: livePomp.statusTopic,
@@ -194,7 +208,7 @@ export async function registerDiscoveredPomp(params: {
 
   await createRegisteredPompRecord({
     ownerId: params.ownerId,
-    woningCode: params.woningCode,
+    woningId: params.woningId,
     pompId: params.pompId,
     status: toDbStatus(String(livePomp.status)),
     lastUpdate: livePomp.lastUpdate,
@@ -203,9 +217,9 @@ export async function registerDiscoveredPomp(params: {
   return {
     alreadyExists: false,
     record: {
-      uniqueId: `${params.woningCode}_${params.pompId}`,
+      uniqueId: `${params.woningId}_${params.pompId}`,
       id: params.pompId,
-      woning: params.woningCode,
+      woning: params.woningId,
       status: livePomp.status,
       lastUpdate: livePomp.lastUpdate,
       statusTopic: livePomp.statusTopic,
@@ -214,11 +228,11 @@ export async function registerDiscoveredPomp(params: {
   };
 }
 
-export async function getAuditLogForWoning(woningCode: string) {
+export async function getAuditLogForWoning(woningId: string) {
   ensureMqttSubscription();
-  await syncDiscoveredPompen(woningCode);
+  await syncDiscoveredPompen(woningId);
 
-  return getPompLogSnapshot().filter((item) => item.woning === woningCode);
+  return getPompLogSnapshot().filter((item) => item.woning === woningId);
 }
 
 export async function updatePompStatus(body: unknown) {

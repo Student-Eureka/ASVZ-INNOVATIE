@@ -6,7 +6,7 @@ export type UserRow = {
   name: string;
   role: Role;
   lastLogin?: string;
-  woningCode: string;
+  woningId: string;
 };
 
 export type NewPumpRow = {

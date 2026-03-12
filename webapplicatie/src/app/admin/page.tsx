@@ -143,13 +143,9 @@ export default function AdminPanelPage() {
     const s = q.trim().toLowerCase();
     if (!s) return users;
     return users.filter((u) =>
-      [u.name, u.role, u.woningCode].some((x) => (x || '').toLowerCase().includes(s))
+      [u.name, u.role, u.woningId].some((x) => (x || '').toLowerCase().includes(s))
     );
   }, [users, q]);
-
-  const tenantLabel = useMemo(() => {
-    return users[0]?.woningCode ?? newPumps[0]?.woning ?? auditEntries[0]?.woning ?? '';
-  }, [auditEntries, newPumps, users]);
 
   const stats = useMemo(() => {
     const admins = users.filter((u) => u.role === 'admin').length;
@@ -175,11 +171,6 @@ export default function AdminPanelPage() {
             </div>
           </div>
 
-          {tenantLabel && (
-            <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600">
-              {tenantLabel}
-            </span>
-          )}
         </div>
       </header>
 
@@ -202,7 +193,6 @@ export default function AdminPanelPage() {
             <UsersSection
               users={filteredUsers}
               q={q}
-              tenantLabel={tenantLabel}
               onQueryChange={setQ}
               onEdit={(user) => setEditingUser(user)}
               onDelete={deleteUser}

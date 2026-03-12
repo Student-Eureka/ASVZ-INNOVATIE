@@ -4,9 +4,9 @@ import { db } from './db';
 
 interface LoginRow extends RowDataPacket {
   woning_id: string;
-  woning_code: string;
   wachtwoord: string;
   rol: 'admin' | 'user';
+  gebruikersnaam: string;
 }
 
 interface ExistingUserRow extends RowDataPacket {
@@ -18,12 +18,11 @@ interface UserRow extends RowDataPacket {
   name: string;
   role: 'admin' | 'user';
   lastLogin: string | null;
-  woningCode: string;
+  woningId: string;
 }
 
 interface UserByIdRow extends RowDataPacket {
   woning_id: string;
-  woning_code: string;
   rol: 'admin' | 'user';
   gebruikersnaam: string;
   last_login: string | null;
@@ -31,7 +30,7 @@ interface UserByIdRow extends RowDataPacket {
 
 export async function getUserForLogin(gebruikersnaam: string) {
   const [rows] = await db.query<LoginRow[]>(
-    'SELECT woning_id, woning_code, wachtwoord, rol FROM woningen WHERE gebruikersnaam = ?',
+    'SELECT woning_id, gebruikersnaam, wachtwoord, rol FROM woningen WHERE gebruikersnaam = ?',
     [gebruikersnaam]
   );
   return rows;
@@ -46,53 +45,42 @@ export async function findExistingUser(gebruikersnaam: string) {
 }
 
 export async function createUserRecord(
-  woningCode: string,
   gebruikersnaam: string,
   hashedPassword: string,
   rol: 'admin' | 'user'
 ) {
   const [result] = await db.query<ResultSetHeader>(
-    'INSERT INTO woningen (woning_code, gebruikersnaam, wachtwoord, rol) VALUES (?, ?, ?, ?)',
-    [woningCode, gebruikersnaam, hashedPassword, rol]
+    'INSERT INTO woningen (gebruikersnaam, wachtwoord, rol) VALUES (?, ?, ?)',
+    [gebruikersnaam, hashedPassword, rol]
   );
   return result;
 }
 
-export async function getUsersList(woningCode: string) {
+export async function getUsersList() {
   const [rows] = await db.query<UserRow[]>(
     `SELECT woning_id AS id,
             gebruikersnaam AS name,
             rol AS role,
             last_login AS lastLogin,
-            woning_code AS woningCode
+            woning_id AS woningId
        FROM woningen
-      WHERE woning_code = ?
       ORDER BY gebruikersnaam ASC`,
-    [woningCode]
+    []
   );
   return rows;
 }
 
-export async function deleteUserById(id: string, woningCode: string) {
-  await db.query('DELETE FROM woningen WHERE woning_id = ? AND woning_code = ?', [id, woningCode]);
+export async function deleteUserById(id: string) {
+  await db.query('DELETE FROM woningen WHERE woning_id = ?', [id]);
 }
 
-export async function updateUserById(
-  id: string,
-  updatesSql: string,
-  values: string[],
-  woningCode: string
-) {
-  await db.query(`UPDATE woningen SET ${updatesSql} WHERE woning_id = ? AND woning_code = ?`, [
-    ...values,
-    id,
-    woningCode,
-  ]);
+export async function updateUserById(id: string, updatesSql: string, values: string[]) {
+  await db.query(`UPDATE woningen SET ${updatesSql} WHERE woning_id = ?`, [...values, id]);
 }
 
 export async function getUserById(id: string) {
   const [rows] = await db.query<UserByIdRow[]>(
-    `SELECT woning_id, woning_code, rol, gebruikersnaam, last_login
+    `SELECT woning_id, rol, gebruikersnaam, last_login
        FROM woningen
       WHERE woning_id = ?`,
     [id]

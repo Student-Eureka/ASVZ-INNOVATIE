@@ -31,7 +31,6 @@ export async function requireUserByToken(token?: string | null) {
   if (AUTH_DISABLED) {
     return {
       woning_id: '4',
-      woning_code: 'woning_a',
       rol: 'admin' as const,
       gebruikersnaam: 'root',
       last_login: null,

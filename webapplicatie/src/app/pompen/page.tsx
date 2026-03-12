@@ -7,7 +7,6 @@ import AppSidebar from '../_components/AppSidebar';
 import PompenHeader from './_components/PompenHeader';
 import PompenList from './_components/PompenList';
 import PompenSearch from './_components/PompenSearch';
-import PompenSideExtras from './_components/PompenSideExtras';
 import { mapPompenToItems } from './_data/pompen';
 import type { PompApiRecord, PompItem } from './_types/pompen';
 
@@ -75,7 +74,6 @@ export default function PompenOverzichtPage() {
       <div className="max-w-6xl mx-auto px-6 py-6 grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
         <div className="hidden lg:block">
           <AppSidebar>
-            <PompenSideExtras />
           </AppSidebar>
         </div>
 

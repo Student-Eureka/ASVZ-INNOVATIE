@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
   try {
     const token = req.cookies.get('session')?.value ?? null;
     const admin = await requireAdminByToken(token);
-    const rows = await getUsers(admin.woning_code);
+    const rows = await getUsers();
     return NextResponse.json(rows);
   } catch (err) {
     return NextResponse.json(
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
     const token = req.cookies.get('session')?.value ?? null;
     const admin = await requireAdminByToken(token);
     const payload = await req.json();
-    const result = await createUser(payload, admin.woning_code);
+    const result = await createUser(payload);
     if (!result.success) {
       return NextResponse.json(
         { success: false, message: result.message },
@@ -61,7 +61,6 @@ export async function DELETE(req: NextRequest) {
     const payload = await req.json();
     const result = await deleteUser(payload, {
       id: admin.woning_id,
-      woningCode: admin.woning_code,
     });
     if (!result.success) {
       return NextResponse.json(
@@ -83,7 +82,7 @@ export async function PATCH(req: NextRequest) {
     const token = req.cookies.get('session')?.value ?? null;
     const admin = await requireAdminByToken(token);
     const payload = await req.json();
-    const result = await updateUser(payload, admin.woning_code);
+    const result = await updateUser(payload);
     if (!result.success) {
       return NextResponse.json(
         { success: false, message: result.message },

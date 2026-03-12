@@ -1,6 +1,7 @@
 ﻿'use client';
 
 import type { ReactNode } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -17,12 +18,39 @@ function isActive(pathname: string, href: string) {
 }
 
 export default function AppSidebar({ children }: { children?: ReactNode }) {
+  // Sidebar met dynamische Admin-tab op basis van rol.
   const pathname = usePathname();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadRole() {
+      try {
+        // Rol ophalen zodat de Admin-tab alleen voor admins zichtbaar is.
+        const res = await fetch('/api/me', { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = (await res.json()) as { role?: string };
+        if (!active) return;
+        setIsAdmin(data.role === 'admin');
+      } catch {
+        if (!active) return;
+        setIsAdmin(false);
+      }
+    }
+
+    loadRole();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const items = NAV_ITEMS.filter((item) => item.href !== '/admin' || isAdmin);
 
   return (
     <aside className="rounded-3xl bg-white border border-slate-200 shadow-sm p-3 h-fit">
       <nav className="space-y-1">
-        {NAV_ITEMS.map((item) => {
+        {items.map((item) => {
           const active = isActive(pathname, item.href);
           return (
             <Link
