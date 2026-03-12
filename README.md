@@ -176,5 +176,5 @@ Links naar detaildocumentatie:
 - `webapplicatie/Project-Overdracht.md` - Technische overdracht (huidige stand)
 - `hardware/README.md` - Pinout, actuator, hardware code
 - `mqtt/README.md` - Topics, QoS, setup
-- `mqtt/INSTALL_UBUNTU.md` - MQTT installatie op Ubuntu
+- `mqtt/INSTALL_MQTT.md` - MQTT installatie op Ubuntu
 - `server/README.md` - Linux server setup (Ubuntu + PM2)

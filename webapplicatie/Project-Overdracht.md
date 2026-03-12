@@ -134,6 +134,15 @@ SERVO_MQTT_PASS=
 SERVO_MQTT_REJECT_UNAUTHORIZED=
 ```
 
+Invulhulp:
+- `MQTT_BROKER_URL` → `mqtt://<broker-ip>:1883`
+- `MQTT_USER`/`MQTT_PASS` → de user/pass van je MQTT broker
+- `SERVO_MQTT_PROTOCOL` → meestal `mqtt`
+- `SERVO_MQTT_REJECT_UNAUTHORIZED` → `false` als je geen TLS gebruikt
+
+Belangrijk bij MQTT install:
+- Update `.env` met `MQTT_BROKER_URL`, `MQTT_USER`, `MQTT_PASS`.
+
 ---
 
 ## 6. Wat er al professioneel staat
