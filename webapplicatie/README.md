@@ -3,7 +3,9 @@
 Deze map bevat de Next.js webapplicatie voor het Sondepomp Dashboard.
 
 - [Architecture](./Architecture.md)
+- [API](./API.md)
 - [Project-Overdracht](./Project-Overdracht.md)
+- [Database](./db/README.md)
 
 ## Quick start / lokale run
 
@@ -25,7 +27,9 @@ npm run dev
 
 ## Belangrijke documenten
 - `Architecture.md` – architectuur en laagregels
+- `API.md` – API overzicht
 - `Project-Overdracht.md` – volledige technische overdracht
+- `db/README.md` – database uitleg
 
 ## Architectuur in het kort
 De app is opgezet in 4 lagen:
