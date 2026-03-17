@@ -1,0 +1,96 @@
+from machine import Pin, PWM, ADC
+import time
+
+# =========================
+# INSTELLINGEN
+# =========================
+SERVO_PIN = 15
+MIC_PIN = 26
+THRESHOLD = 62000
+
+HOME = 5
+TARGET = 0
+REVERSE = False
+
+MIN_US = 500
+MAX_US = 2500
+
+COOLDOWN_MS = 800
+last_trigger = 0
+
+# Zet deze tijdelijk op True als je handmatig 1 keer wilt testen
+MANUAL_TRIGGER = False
+
+# =========================
+# HARDWARE
+# =========================
+servo = PWM(Pin(SERVO_PIN))
+servo.freq(50)
+
+mic = ADC(MIC_PIN)
+
+# =========================
+# FUNCTIES
+# =========================
+def set_angle(angle):
+    angle = max(0, min(180, angle))
+
+    if REVERSE:
+        angle = 180 - angle
+
+    pulse_us = MIN_US + (MAX_US - MIN_US) * angle / 180
+    duty = int((pulse_us / 20000) * 65535)
+    servo.duty_u16(duty)
+
+def can_trigger():
+    global last_trigger
+    now = time.ticks_ms()
+    if time.ticks_diff(now, last_trigger) >= COOLDOWN_MS:
+        last_trigger = now
+        return True
+    return False
+
+def do_move():
+    print("Beweging")
+    set_angle(TARGET)
+    time.sleep(0.2)
+    set_angle(HOME)
+    time.sleep(0.2)
+
+# =========================
+# START
+# =========================
+set_angle(HOME)
+time.sleep(1)
+
+print("Servo start op home:", HOME)
+print("Microfoon meet constant")
+
+if MANUAL_TRIGGER:
+    do_move()
+
+# =========================
+# LOOP
+# =========================
+counter = 0
+
+while True:
+    try:
+        mic_value = mic.read_u16()
+
+        # Niet elke ronde printen, anders loopt Thonny vol
+        counter += 1
+        if counter >= 10:
+            print("Mic:", mic_value)
+            counter = 0
+
+        if mic_value > THRESHOLD and can_trigger():
+            print("PIEP GEDETECTEERD")
+            do_move()
+
+        time.sleep(0.05)
+
+    except KeyboardInterrupt:
+        print("Gestopt")
+        servo.duty_u16(0)
+        break
