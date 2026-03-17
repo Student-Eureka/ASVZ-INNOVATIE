@@ -112,14 +112,29 @@ Door deze focus blijft het systeem betrouwbaar, overzichtelijk en veilig.
 ## Projectstructuur
 
 ```
-ASVZ_Innovatie/
+ASVZ_INNOVATIE/
 |-- README.md              # Main overzicht (dit document)
+|-- ARCHITECTUUR-OVERZICHT.md
+|-- SETUP-GIDS.md
+|-- RUNBOOK.md
+|-- TESTPLAN.md
+|-- KNOWN-ISSUES.md
 |-- webapplicatie/
-|   |-- README.md           # Technische setup, login flow, API
+|   |-- README.md
+|   |-- Architecture.md
+|   |-- API.md
 |   |-- Project-Overdracht.md
+|   |-- .env.example
+|   `-- ...
+|-- mqtt/
+|   |-- README.md
+|   |-- INSTALL_MQTT.md
+|   `-- ...
+|-- server/
+|   |-- README.md
 |   `-- ...
 `-- hardware/
-    |-- README.md           # Hardware-opbouw, pinout, code
+    |-- README.md
     `-- ...
 ```
 
@@ -172,9 +187,17 @@ Deze repository bevat:
 
 Links naar detaildocumentatie:
 
-- `webapplicatie/README.md` - Webapp setup, login flow, API
-- `webapplicatie/Project-Overdracht.md` - Technische overdracht (huidige stand)
-- `hardware/README.md` - Pinout, actuator, hardware code
-- `mqtt/README.md` - Topics, QoS, setup
+- `ARCHITECTUUR-OVERZICHT.md` - Systeemniveau overzicht
+- `SETUP-GIDS.md` - End-to-end installatiepad
+- `RUNBOOK.md` - Storingen en checks
+- `TESTPLAN.md` - Tests en acceptatiecriteria
+- `KNOWN-ISSUES.md` - Open punten en risico's
+- `webapplicatie/README.md` - Webapp setup
+- `webapplicatie/Architecture.md` - Webapp architectuur
+- `webapplicatie/API.md` - API overzicht
+- `webapplicatie/Project-Overdracht.md` - Technische overdracht (detail)
+- `webapplicatie/db/README.md` - Database uitleg
+- `hardware/README.md` - Hardware-opbouw, pinout, code
+- `mqtt/README.md` - Topics en MQTT uitleg
 - `mqtt/INSTALL_MQTT.md` - MQTT installatie op Ubuntu
 - `server/README.md` - Linux server setup (Ubuntu + PM2)
