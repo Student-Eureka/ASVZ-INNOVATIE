@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 
 import AppSidebar from '../../_components/AppSidebar';
-import PompenSideExtras from '../_components/PompenSideExtras';
 import type { PompApiLogEntry, PompApiRecord } from '../_types/pompen';
 import PumpHeader from './_components/PumpHeader';
 import PumpHistory from './_components/PumpHistory';
@@ -161,7 +160,6 @@ export default function PompDetailPage() {
       <div className="flex-1 px-0 md:px-8 pb-0 md:pb-8 flex flex-col md:flex-row gap-0 md:gap-8 overflow-hidden">
         <div className="hidden md:block w-64 shrink-0 py-2">
           <AppSidebar>
-            <PompenSideExtras />
           </AppSidebar>
         </div>
 
