@@ -24,6 +24,21 @@ interface ColumnExistsRow extends RowDataPacket {
 
 let ensureSchemaPromise: Promise<void> | null = null;
 
+function toMysqlDatetime(value?: string | null) {
+  if (!value) {
+    return null;
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return null;
+  }
+
+  const pad = (part: number) => String(part).padStart(2, '0');
+
+  return `${parsed.getFullYear()}-${pad(parsed.getMonth() + 1)}-${pad(parsed.getDate())} ${pad(parsed.getHours())}:${pad(parsed.getMinutes())}:${pad(parsed.getSeconds())}`;
+}
+
 async function ensurePompSchema() {
   if (!ensureSchemaPromise) {
     ensureSchemaPromise = (async () => {
@@ -139,6 +154,7 @@ export async function createRegisteredPompRecord(params: {
   lastUpdate?: string | null;
 }) {
   await ensurePompSchema();
+  const lastUpdate = toMysqlDatetime(params.lastUpdate);
   const [result] = await db.query<ResultSetHeader>(
     `INSERT INTO pompen (woning_id, pomp_code, mqtt_woning, status, laatste_update)
      VALUES (?, ?, ?, ?, COALESCE(?, CURRENT_TIMESTAMP))
@@ -146,7 +162,7 @@ export async function createRegisteredPompRecord(params: {
        mqtt_woning = VALUES(mqtt_woning),
        status = VALUES(status),
        laatste_update = VALUES(laatste_update)`,
-    [params.woningId, params.pompId, params.mqttWoning, params.status, params.lastUpdate ?? null]
+    [params.woningId, params.pompId, params.mqttWoning, params.status, lastUpdate]
   );
   return result;
 }
