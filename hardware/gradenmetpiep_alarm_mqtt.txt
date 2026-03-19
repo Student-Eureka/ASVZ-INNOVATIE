@@ -9,9 +9,9 @@ import time
 WIFI_SSID = "Eureka_wifi"
 WIFI_PASSWORD = "EurekaEigenWifi"
 
-MQTT_BROKER = "10.1.1.121"
+MQTT_BROKER = "10.1.1.47"
 MQTT_PORT = 1883
-MQTT_USER = "asvzmqtt"
+MQTT_USER = "mqttuser"
 MQTT_PASSWORD = "asvzmqtt"
 
 CLIENT_ID = "pico_alarm_pomp_3"
@@ -39,7 +39,7 @@ MAX_US = 2500
 COOLDOWN_MS = 800
 last_trigger = 0
 
-current_status = "sluimerend"
+current_status = "actief"
 last_publish_ms = 0
 client = None
 
@@ -111,7 +111,7 @@ def handle_servo_command(payload):
         return
 
     do_move()
-    publish_status(client, "sluimerend")
+    publish_status(client, "actief")
 
 
 def on_mqtt_message(topic, payload):
@@ -131,6 +131,7 @@ def mqtt_connect():
         password=MQTT_PASSWORD,
         keepalive=60
     )
+    next_client.set_last_will(STATUS_TOPIC, b"inactief", retain=True)
     next_client.set_callback(on_mqtt_message)
     next_client.connect()
     next_client.subscribe(COMMAND_TOPIC)
@@ -153,7 +154,7 @@ def main():
     print("Servo start op home:", HOME)
     print("Microfoon meet constant")
 
-    publish_status(client, "sluimerend")
+    publish_status(client, "actief")
 
     counter = 0
 
@@ -180,6 +181,11 @@ def main():
 
         except KeyboardInterrupt:
             print("Gestopt")
+            try:
+                publish_status(client, "inactief")
+                client.disconnect()
+            except Exception as e:
+                print("[shutdown] ERROR:", e)
             servo.duty_u16(0)
             break
         except Exception as e:

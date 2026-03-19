@@ -174,6 +174,7 @@ export default function AdminPanelPage() {
   async function addPumpToDatabase(pump: NewPumpRow) {
     try {
       setSavingPompId(pump.uniqueId);
+      setUserError(null);
       const targetWoningId = selectedWoningen[pump.uniqueId];
       if (!targetWoningId) {
         throw new Error('Kies eerst een doelwoning');
@@ -190,6 +191,14 @@ export default function AdminPanelPage() {
       });
       const data = (await res.json().catch(() => ({}))) as { message?: string };
       if (!res.ok) throw new Error(data.message || 'Kon pomp niet toevoegen');
+
+      setNewPumps((current) => current.filter((item) => item.uniqueId !== pump.uniqueId));
+      setSelectedWoningen((current) => {
+        const next = { ...current };
+        delete next[pump.uniqueId];
+        return next;
+      });
+
       setReloadKey((value) => value + 1);
     } catch (err) {
       console.error(err);

@@ -10,9 +10,9 @@ WIFI_SSID = "Eureka_wifi"
 WIFI_PASSWORD = "EurekaEigenWifi"
 
 # MQTT broker en inloggegevens.
-MQTT_BROKER = "10.1.1.121"
+MQTT_BROKER = "10.1.1.47"
 MQTT_PORT = 1883
-MQTT_USER = "asvzmqtt"
+MQTT_USER = "mqttuser"
 MQTT_PASSWORD = "asvzmqtt"
 
 # Unieke client-id zodat de broker deze Pico W kan herkennen.
