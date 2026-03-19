@@ -11,8 +11,8 @@ interface DashboardContentProps {
   stats: {
     totaal: number;
     alarm: number;
-    sluimerend: number;
-    rust: number;
+    actief: number;
+    inactief: number;
   };
 }
 
@@ -28,8 +28,8 @@ export default function DashboardContent({
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
         <StatCard label="Geregistreerde pompen" value={stats.totaal} />
         <StatCard label="Alarm" value={stats.alarm} />
-        <StatCard label="Sluimerend" value={stats.sluimerend} />
-        <StatCard label="Rust" value={stats.rust} />
+        <StatCard label="Actief" value={stats.actief} />
+        <StatCard label="Inactief" value={stats.inactief} />
       </div>
 
       <div className="rounded-3xl bg-white border border-slate-200 shadow-sm">

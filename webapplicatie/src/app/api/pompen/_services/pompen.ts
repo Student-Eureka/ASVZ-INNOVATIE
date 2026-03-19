@@ -107,23 +107,15 @@ async function getRegisteredPompenInScope(woningId?: string | null) {
   return getRegisteredPompen();
 }
 
-function toDbStatus(status: string): 'Inactief' | 'Rust' | 'Actief' | 'Alarm' | 'Sluimerend' {
+function toDbStatus(status: string): 'Inactief' | 'Actief' | 'Alarm' {
   const normalized = status.trim().toLowerCase();
 
   if (normalized === 'alarm') {
     return 'Alarm';
   }
 
-  if (normalized === 'sluimerend') {
-    return 'Sluimerend';
-  }
-
-  if (normalized === 'actief') {
+  if (normalized === 'actief' || normalized === 'rust' || normalized === 'sluimerend' || normalized === 'ok') {
     return 'Actief';
-  }
-
-  if (normalized === 'rust' || normalized === 'ok') {
-    return 'Rust';
   }
 
   return 'Inactief';
@@ -133,11 +125,11 @@ function toApiStatus(status: string) {
   const normalized = status.trim().toLowerCase();
 
   if (normalized === 'actief') return 'actief';
-  if (normalized === 'rust') return 'rust';
   if (normalized === 'inactief') return 'inactief';
   if (normalized === 'alarm') return 'alarm';
-  if (normalized === 'sluimerend') return 'sluimerend';
-  if (normalized === 'ok') return 'rust';
+  if (normalized === 'rust') return 'actief';
+  if (normalized === 'sluimerend') return 'actief';
+  if (normalized === 'ok') return 'actief';
   if (normalized === 'offline') return 'inactief';
 
   return normalized || 'inactief';

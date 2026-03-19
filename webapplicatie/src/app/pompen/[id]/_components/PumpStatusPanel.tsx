@@ -1,15 +1,12 @@
-import { Activity, BellRing, MoonStar, PauseCircle, Power, Radio, Send } from 'lucide-react';
+import { Activity, BellRing, Power, Radio, Send } from 'lucide-react';
 
 import { formatStatusLabel, normalizePompStatus } from '../../_data/pompen';
 import type { PumpData } from '../_types/pomp';
 
 interface PumpStatusPanelProps {
   data: PumpData;
-  isCoolingDown: boolean;
-  cooldownTime: number;
   servoLoading: boolean;
   onServoAction: () => void;
-  formatTime: (seconds: number) => string;
 }
 
 function getStatusMeta(status: string) {
@@ -23,27 +20,11 @@ function getStatusMeta(status: string) {
     };
   }
 
-  if (normalized === 'sluimerend') {
-    return {
-      icon: MoonStar,
-      ringClass: 'border-sky-100 bg-sky-50 shadow-sky-200 text-sky-600',
-      barClass: 'bg-sky-500',
-    };
-  }
-
   if (normalized === 'actief') {
     return {
       icon: Activity,
       ringClass: 'border-emerald-100 bg-emerald-50 shadow-emerald-200 text-emerald-500',
       barClass: 'bg-emerald-500',
-    };
-  }
-
-  if (normalized === 'rust') {
-    return {
-      icon: PauseCircle,
-      ringClass: 'border-yellow-100 bg-yellow-50 shadow-yellow-200 text-yellow-500',
-      barClass: 'bg-yellow-500',
     };
   }
 
@@ -56,16 +37,13 @@ function getStatusMeta(status: string) {
 
 export default function PumpStatusPanel({
   data,
-  isCoolingDown,
-  cooldownTime,
   servoLoading,
   onServoAction,
-  formatTime,
 }: PumpStatusPanelProps) {
   const meta = getStatusMeta(data.status);
   const StatusIcon = meta.icon;
   const canTriggerServo = normalizePompStatus(data.status) === 'alarm';
-  const isDisabled = servoLoading || isCoolingDown || !canTriggerServo;
+  const isDisabled = servoLoading || !canTriggerServo;
 
   return (
     <div className="w-full md:w-[360px] p-6 md:p-10 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-gray-200 bg-white relative overflow-hidden">
@@ -105,11 +83,7 @@ export default function PumpStatusPanel({
         ) : (
           <Send size={22} />
         )}
-        {isCoolingDown
-          ? `Beschikbaar in ${formatTime(cooldownTime)}`
-          : canTriggerServo
-            ? 'Servo aansturen'
-            : 'Wacht op alarm'}
+        {canTriggerServo ? 'Servo aansturen' : 'Wacht op alarm'}
       </button>
     </div>
   );

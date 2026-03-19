@@ -35,19 +35,6 @@ export default function PompDetailPage() {
   const [logItems, setLogItems] = useState<PompApiLogEntry[]>([]);
   const [statusText, setStatusText] = useState('Wachten op data...');
   const [servoLoading, setServoLoading] = useState(false);
-  const [cooldownTime, setCooldownTime] = useState(0);
-
-  useEffect(() => {
-    if (cooldownTime <= 0) {
-      return;
-    }
-
-    const timer = window.setTimeout(() => {
-      setCooldownTime((current) => Math.max(0, current - 1));
-    }, 1000);
-
-    return () => window.clearTimeout(timer);
-  }, [cooldownTime]);
 
   useEffect(() => {
     if (!pumpId) {
@@ -115,7 +102,7 @@ export default function PompDetailPage() {
   );
 
   const triggerServo = async () => {
-    if (servoLoading || cooldownTime > 0 || normalizePompStatus(pumpData.status) !== 'alarm') {
+    if (servoLoading || normalizePompStatus(pumpData.status) !== 'alarm') {
       return;
     }
 
@@ -137,7 +124,6 @@ export default function PompDetailPage() {
         throw new Error(data.error || 'Kon servo-commando niet versturen');
       }
 
-      setCooldownTime(300);
       alert(data.message || `Commando verstuurd naar ${pumpData.woning}/${pumpData.id}`);
     } catch (error) {
       console.error(error);
@@ -145,12 +131,6 @@ export default function PompDetailPage() {
     } finally {
       setServoLoading(false);
     }
-  };
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
   return (
@@ -171,11 +151,8 @@ export default function PompDetailPage() {
         <div className="flex-1 bg-[#F8F9FA] rounded-t-[30px] md:rounded-t-[40px] shadow-[0_-10px_40px_rgba(0,0,0,0.2)] overflow-hidden flex flex-col md:flex-row relative">
           <PumpStatusPanel
             data={pumpData}
-            isCoolingDown={cooldownTime > 0}
-            cooldownTime={cooldownTime}
             servoLoading={servoLoading}
             onServoAction={triggerServo}
-            formatTime={formatTime}
           />
 
           <div className="flex-1 p-6 md:p-10 overflow-y-auto bg-[#F8F9FA]">

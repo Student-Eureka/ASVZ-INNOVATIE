@@ -22,19 +22,11 @@ function resolveStatusMessage(status: string) {
     return 'Alarm ontvangen. Deze pomp wacht op een handmatige servo-actie vanuit de webapp.';
   }
 
-  if (normalized === 'sluimerend') {
-    return 'Servo is aangestuurd. De pomp staat nu sluimerend.';
-  }
-
   if (normalized === 'actief') {
-    return 'Pomp is actief en verwerkt op dit moment een melding.';
+    return 'Pomp is aangesloten, actief en luistert naar een volgend piepsignaal.';
   }
 
-  if (normalized === 'rust') {
-    return 'Pomp staat in rust en wacht op een volgende actie.';
-  }
-
-  return 'Nog geen bruikbare live status ontvangen voor deze pomp.';
+  return 'Pomp is niet aangesloten of nog niet live bereikbaar.';
 }
 
 function mapHistoryItems(items: PompApiLogEntry[]): PumpHistoryItem[] {

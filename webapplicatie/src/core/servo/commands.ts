@@ -1,4 +1,4 @@
-import { recordServoCommand } from '@/core/pompenStore';
+import { recordPompStatus, recordServoCommand } from '@/core/pompenStore';
 import { publishOnce } from '@/infra/mqttPublish';
 
 interface ServoCommandConfig {
@@ -35,5 +35,11 @@ export async function sendServoSweep(config: ServoCommandConfig, target: ServoTa
     woning: topic.split('/')[1] || target.woning,
     pompId: target.pompId,
     message: `Servo-commando verstuurd (${payload})`,
+  });
+
+  recordPompStatus({
+    woning: topic.split('/')[1] || target.woning,
+    pompId: target.pompId,
+    status: 'actief',
   });
 }

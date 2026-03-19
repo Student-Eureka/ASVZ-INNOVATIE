@@ -135,7 +135,7 @@ export async function createRegisteredPompRecord(params: {
   woningId: string;
   pompId: string;
   mqttWoning: string;
-  status: 'Inactief' | 'Rust' | 'Actief' | 'Alarm' | 'Sluimerend';
+  status: 'Inactief' | 'Actief' | 'Alarm';
   lastUpdate?: string | null;
 }) {
   await ensurePompSchema();

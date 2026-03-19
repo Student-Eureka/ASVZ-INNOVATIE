@@ -1,4 +1,4 @@
-import { Activity, BellRing, ChevronRight, Clock3, MoonStar, PauseCircle, Power, Radio } from 'lucide-react';
+import { Activity, BellRing, ChevronRight, Clock3, Power, Radio } from 'lucide-react';
 
 import { formatStatusLabel, normalizePompStatus } from '../_data/pompen';
 import type { PompItem, PompStatus } from '../_types/pompen';
@@ -45,40 +45,6 @@ function StatusChip({ status, mobile = false }: StatusChipProps) {
     );
   }
 
-  if (normalized === 'sluimerend') {
-    return (
-      <div className={`flex items-center gap-2 ${mobile ? 'bg-sky-50 px-3 py-1 rounded-full' : ''}`}>
-        {!mobile && (
-          <div className="bg-sky-100 p-2 rounded-xl text-sky-600">
-            <MoonStar size={20} />
-          </div>
-        )}
-        {mobile && <MoonStar size={16} className="text-sky-600" />}
-        <div>
-          <p className="text-sky-700 font-bold text-sm">{formatStatusLabel(normalized)}</p>
-          {!mobile && <p className="text-sky-500 text-xs">Servo is aangestuurd</p>}
-        </div>
-      </div>
-    );
-  }
-
-  if (normalized === 'rust') {
-    return (
-      <div className={`flex items-center gap-2 ${mobile ? 'bg-yellow-50 px-3 py-1 rounded-full' : ''}`}>
-        {!mobile && (
-          <div className="bg-yellow-100 p-2 rounded-xl text-yellow-600">
-            <PauseCircle size={20} />
-          </div>
-        )}
-        {mobile && <PauseCircle size={16} className="text-yellow-600" />}
-        <div>
-          <p className="text-yellow-700 font-bold text-sm">{formatStatusLabel(normalized)}</p>
-          {!mobile && <p className="text-yellow-500 text-xs">Geen directe actie nodig</p>}
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className={`flex items-center gap-2 opacity-80 ${mobile ? 'bg-slate-100 px-3 py-1 rounded-full' : ''}`}>
       {!mobile && (
@@ -115,11 +81,7 @@ export default function PompenList({ items, onSelect }: PompenListProps) {
                 ? 'bg-rose-500'
                 : normalizePompStatus(String(pomp.status)) === 'actief'
                 ? 'bg-emerald-500'
-                : normalizePompStatus(String(pomp.status)) === 'sluimerend'
-                  ? 'bg-sky-500'
-                : normalizePompStatus(String(pomp.status)) === 'rust'
-                  ? 'bg-yellow-500'
-                  : 'bg-slate-300'
+                : 'bg-slate-300'
             }`}
           />
 

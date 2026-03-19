@@ -18,14 +18,11 @@ function getTone(entry: AuditRow) {
   if (status === 'alarm') {
     return 'bg-rose-50 text-rose-700 border-rose-200';
   }
-  if (status === 'sluimerend') {
-    return 'bg-sky-50 text-sky-700 border-sky-200';
-  }
   if (status === 'actief') {
     return 'bg-emerald-50 text-emerald-700 border-emerald-200';
   }
-  if (status === 'rust') {
-    return 'bg-yellow-50 text-yellow-700 border-yellow-200';
+  if (status === 'inactief') {
+    return 'bg-slate-50 text-slate-600 border-slate-200';
   }
   return 'bg-slate-50 text-slate-600 border-slate-200';
 }

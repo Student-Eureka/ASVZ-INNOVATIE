@@ -1,6 +1,6 @@
 import type { MqttClient } from 'mqtt';
 
-export type PompStatus = 'actief' | 'rust' | 'inactief' | 'alarm' | 'sluimerend' | string;
+export type PompStatus = 'actief' | 'inactief' | 'alarm' | string;
 
 export interface PompRecord {
   uniqueId: string;
@@ -47,15 +47,10 @@ function buildCommandTopic(woning: string, pompId: string) {
 function normalizeStatus(status: string): PompStatus {
   const normalized = status.trim().toLowerCase();
 
-  if (normalized === 'ok') return 'rust';
+  if (normalized === 'ok') return 'actief';
   if (normalized === 'offline') return 'inactief';
-  if (
-    normalized === 'actief' ||
-    normalized === 'rust' ||
-    normalized === 'inactief' ||
-    normalized === 'alarm' ||
-    normalized === 'sluimerend'
-  ) {
+  if (normalized === 'rust' || normalized === 'sluimerend') return 'actief';
+  if (normalized === 'actief' || normalized === 'inactief' || normalized === 'alarm') {
     return normalized;
   }
 

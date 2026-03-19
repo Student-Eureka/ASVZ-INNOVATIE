@@ -3,18 +3,15 @@
 export default function StatusPill({ status }: { status: string }) {
   const normalized = status.toLowerCase();
   const isAlarm = normalized === 'alarm';
-  const isAan = normalized === 'actief';
-  const isSluimerend = normalized === 'sluimerend';
-  const isRust = normalized === 'rust';
+  const isActief = normalized === 'actief';
+  const isInactief = normalized === 'inactief';
 
   const color = isAlarm
     ? 'bg-rose-50 text-rose-700 border-rose-200'
-    : isAan
+    : isActief
     ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-    : isSluimerend
-      ? 'bg-sky-50 text-sky-700 border-sky-200'
-    : isRust
-      ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
+    : isInactief
+      ? 'bg-slate-50 text-slate-500 border-slate-200'
       : 'bg-slate-50 text-slate-500 border-slate-200';
 
   return (

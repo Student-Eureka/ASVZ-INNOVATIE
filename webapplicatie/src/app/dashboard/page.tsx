@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 
 import AppSidebar from '../_components/AppSidebar';
+import { normalizePompStatus } from '../pompen/_data/pompen';
 import DashboardContent from './_components/DashboardContent';
 import DashboardHeader from './_components/DashboardHeader';
 import type { DashboardEvent, Pomp } from './_types/dashboard';
@@ -43,7 +44,7 @@ export default function DashboardPage() {
             pompenData.map((p: Pomp) => ({
               ...p,
               uniqueId: `${p.woning}_${p.id}`,
-              status: p.status || 'inactief',
+              status: normalizePompStatus(String(p.status || 'inactief')),
             }))
           );
           setEvents((eventsData as DashboardEvent[]).slice(0, 6));
@@ -87,10 +88,10 @@ export default function DashboardPage() {
 
   const stats = useMemo(() => {
     const totaal = pompen.length;
-    const alarm = pompen.filter((p) => p.status.toLowerCase() === 'alarm').length;
-    const sluimerend = pompen.filter((p) => p.status.toLowerCase() === 'sluimerend').length;
-    const rust = pompen.filter((p) => p.status.toLowerCase() === 'rust').length;
-    return { totaal, alarm, sluimerend, rust };
+    const alarm = pompen.filter((p) => normalizePompStatus(p.status) === 'alarm').length;
+    const actief = pompen.filter((p) => normalizePompStatus(p.status) === 'actief').length;
+    const inactief = pompen.filter((p) => normalizePompStatus(p.status) === 'inactief').length;
+    return { totaal, alarm, actief, inactief };
   }, [pompen]);
 
   return (

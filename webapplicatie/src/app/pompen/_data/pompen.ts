@@ -7,12 +7,12 @@ function titleCase(value: string) {
 export function normalizePompStatus(status: string): PompStatus {
   const normalized = status.trim().toLowerCase();
 
-  if (normalized === 'ok') return 'rust';
+  if (normalized === 'ok') return 'actief';
   if (normalized === 'offline') return 'inactief';
   if (normalized === 'alarm') return 'alarm';
-  if (normalized === 'sluimerend') return 'sluimerend';
   if (normalized === 'actief') return 'actief';
-  if (normalized === 'rust') return 'rust';
+  if (normalized === 'rust') return 'actief';
+  if (normalized === 'sluimerend') return 'actief';
   if (normalized === 'inactief') return 'inactief';
 
   return normalized || 'inactief';
