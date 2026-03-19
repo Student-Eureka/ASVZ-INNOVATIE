@@ -10,6 +10,7 @@ import PumpHistory from './_components/PumpHistory';
 import PumpStats from './_components/PumpStats';
 import PumpStatusPanel from './_components/PumpStatusPanel';
 import { createPumpData } from './_data/pumpData';
+import { normalizePompStatus } from '../_data/pompen';
 
 interface ServoResponse {
   success?: boolean;
@@ -114,7 +115,7 @@ export default function PompDetailPage() {
   );
 
   const triggerServo = async () => {
-    if (servoLoading || cooldownTime > 0) {
+    if (servoLoading || cooldownTime > 0 || normalizePompStatus(pumpData.status) !== 'alarm') {
       return;
     }
 
@@ -124,7 +125,11 @@ export default function PompDetailPage() {
       const res = await fetch('/api/servo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ woning: pumpData.woning, pompId: pumpData.id }),
+        body: JSON.stringify({
+          woning: pumpData.woning,
+          pompId: pumpData.id,
+          topic: pumpData.commandTopic,
+        }),
       });
       const data = (await res.json().catch(() => ({}))) as ServoResponse;
 

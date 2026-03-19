@@ -1,4 +1,4 @@
-import { Activity, ChevronRight, Clock3, PauseCircle, Power, Radio } from 'lucide-react';
+import { Activity, BellRing, ChevronRight, Clock3, MoonStar, PauseCircle, Power, Radio } from 'lucide-react';
 
 import { formatStatusLabel, normalizePompStatus } from '../_data/pompen';
 import type { PompItem, PompStatus } from '../_types/pompen';
@@ -23,6 +23,40 @@ function StatusChip({ status, mobile = false }: StatusChipProps) {
         <div>
           <p className="text-emerald-700 font-bold text-sm">{formatStatusLabel(normalized)}</p>
           {!mobile && <p className="text-emerald-500 text-xs">Actieve status ontvangen</p>}
+        </div>
+      </div>
+    );
+  }
+
+  if (normalized === 'alarm') {
+    return (
+      <div className={`flex items-center gap-2 ${mobile ? 'bg-rose-50 px-3 py-1 rounded-full' : ''}`}>
+        {!mobile && (
+          <div className="bg-rose-100 p-2 rounded-xl text-rose-600">
+            <BellRing size={20} />
+          </div>
+        )}
+        {mobile && <BellRing size={16} className="text-rose-600" />}
+        <div>
+          <p className="text-rose-700 font-bold text-sm">{formatStatusLabel(normalized)}</p>
+          {!mobile && <p className="text-rose-500 text-xs">Handmatige servo-actie vereist</p>}
+        </div>
+      </div>
+    );
+  }
+
+  if (normalized === 'sluimerend') {
+    return (
+      <div className={`flex items-center gap-2 ${mobile ? 'bg-sky-50 px-3 py-1 rounded-full' : ''}`}>
+        {!mobile && (
+          <div className="bg-sky-100 p-2 rounded-xl text-sky-600">
+            <MoonStar size={20} />
+          </div>
+        )}
+        {mobile && <MoonStar size={16} className="text-sky-600" />}
+        <div>
+          <p className="text-sky-700 font-bold text-sm">{formatStatusLabel(normalized)}</p>
+          {!mobile && <p className="text-sky-500 text-xs">Servo is aangestuurd</p>}
         </div>
       </div>
     );
@@ -72,13 +106,17 @@ export default function PompenList({ items, onSelect }: PompenListProps) {
       {items.map((pomp) => (
         <div
           key={pomp.uniqueId}
-          onClick={() => onSelect(pomp.id)}
+          onClick={() => onSelect(pomp.uniqueId)}
           className="group bg-white rounded-2xl p-4 shadow-sm border border-gray-100 active:scale-[0.98] transition-all duration-200 cursor-pointer relative overflow-hidden"
         >
           <div
             className={`absolute left-0 top-0 bottom-0 w-1.5 ${
-              normalizePompStatus(String(pomp.status)) === 'actief'
+              normalizePompStatus(String(pomp.status)) === 'alarm'
+                ? 'bg-rose-500'
+                : normalizePompStatus(String(pomp.status)) === 'actief'
                 ? 'bg-emerald-500'
+                : normalizePompStatus(String(pomp.status)) === 'sluimerend'
+                  ? 'bg-sky-500'
                 : normalizePompStatus(String(pomp.status)) === 'rust'
                   ? 'bg-yellow-500'
                   : 'bg-slate-300'

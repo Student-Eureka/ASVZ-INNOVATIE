@@ -87,10 +87,10 @@ export default function DashboardPage() {
 
   const stats = useMemo(() => {
     const totaal = pompen.length;
-    const actief = pompen.filter((p) => p.status.toLowerCase() === 'actief').length;
+    const alarm = pompen.filter((p) => p.status.toLowerCase() === 'alarm').length;
+    const sluimerend = pompen.filter((p) => p.status.toLowerCase() === 'sluimerend').length;
     const rust = pompen.filter((p) => p.status.toLowerCase() === 'rust').length;
-    const inactief = totaal - actief - rust;
-    return { totaal, actief, rust, inactief };
+    return { totaal, alarm, sluimerend, rust };
   }, [pompen]);
 
   return (

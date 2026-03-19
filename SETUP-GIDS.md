@@ -45,9 +45,10 @@ sudo systemctl start mysql
 
 2. Maak database en importeer schema:
 ```bash
-mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS asvz_db;"
-mysql -u root -p /opt/asvz/webapplicatie/db/asvz_db.sql
+sudo mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS asvz_db;"
+sudo mysql -u root -p "<database-name>" < "Path To .sql file from bash"
 ```
+Als wachtwoord nodig is voor localhost@root, "sudo passwd root" om wachtwoord te veranderen.
 
 3. Maak een app-user (aanbevolen):
 ```bash
@@ -107,10 +108,16 @@ Zie `server/README.md` en `webapplicatie/README.md` voor detail.
 1. Ga naar de webapp map en installeer dependencies:
 ```bash
 cd /opt/asvz/webapplicatie
+sudo apt install npm
 npm install
 ```
 
-2. Maak `.env` in `webapplicatie/` met minimaal:
+2. Maak `.env` in `webapplicatie/`. en verwissel de placeholders met jou eigen informatie.
+```bash
+sudo nano .env
+```
+
+met minimaal:
 ```
 DB_HOST=localhost
 DB_PORT=3306
@@ -135,6 +142,7 @@ SERVO_MQTT_REJECT_UNAUTHORIZED=false
 3. Build en start:
 ```bash
 npm run build
+npm install -g pm2
 pm2 start npm --name asvz-webapp -- start
 pm2 save
 ```

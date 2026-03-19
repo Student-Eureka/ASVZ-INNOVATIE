@@ -7,7 +7,9 @@ import {
 } from '@/core/pompenStore';
 import {
   createRegisteredPompRecord,
+  getRegisteredPompIds,
   getRegisteredPompByWoningAndId,
+  getRegisteredPompen,
   getRegisteredPompIdsByWoningId,
   getRegisteredPompenByWoningId,
 } from '@/infra/pompRepo';
@@ -70,10 +72,53 @@ function buildCommandTopic(woningId: string, pompId: string) {
   return `asvz/${woningId}/${pompId}/set`;
 }
 
-function toDbStatus(status: string): 'Inactief' | 'Rust' | 'Actief' {
+function resolveMqttWoning(record: { woningId: string; mqttWoning?: string | null }) {
+  return readString(record.mqttWoning) || String(record.woningId);
+}
+
+function matchesWoningScope(candidate: string, woningId?: string | null) {
+  if (!woningId) {
+    return true;
+  }
+
+  return candidate === woningId;
+}
+
+async function getRegisteredPumpKeys(woningId?: string | null) {
+  if (woningId) {
+    return (await getRegisteredPompIdsByWoningId(woningId)).map((record) => ({
+      woningId: String(record.woningId),
+      pompId: record.pompId,
+      mqttWoning: resolveMqttWoning({
+        woningId: String(record.woningId),
+        mqttWoning: record.mqttWoning,
+      }),
+    }));
+  }
+
+  return getRegisteredPompIds();
+}
+
+async function getRegisteredPompenInScope(woningId?: string | null) {
+  if (woningId) {
+    return getRegisteredPompenByWoningId(woningId);
+  }
+
+  return getRegisteredPompen();
+}
+
+function toDbStatus(status: string): 'Inactief' | 'Rust' | 'Actief' | 'Alarm' | 'Sluimerend' {
   const normalized = status.trim().toLowerCase();
 
-  if (normalized === 'actief' || normalized === 'alarm') {
+  if (normalized === 'alarm') {
+    return 'Alarm';
+  }
+
+  if (normalized === 'sluimerend') {
+    return 'Sluimerend';
+  }
+
+  if (normalized === 'actief') {
     return 'Actief';
   }
 
@@ -90,32 +135,36 @@ function toApiStatus(status: string) {
   if (normalized === 'actief') return 'actief';
   if (normalized === 'rust') return 'rust';
   if (normalized === 'inactief') return 'inactief';
-  if (normalized === 'alarm') return 'actief';
+  if (normalized === 'alarm') return 'alarm';
+  if (normalized === 'sluimerend') return 'sluimerend';
   if (normalized === 'ok') return 'rust';
   if (normalized === 'offline') return 'inactief';
 
   return normalized || 'inactief';
 }
 
-async function syncDiscoveredPompen(woningId: string) {
-  const livePompen = getPompenSnapshot().filter((record) => record.woning === woningId);
-  const registeredPumpIds = new Set(
-    (await getRegisteredPompIdsByWoningId(woningId)).map(normalizePompId)
+async function syncDiscoveredPompen(woningId?: string | null) {
+  const livePompen = getPompenSnapshot().filter((record) => matchesWoningScope(record.woning, woningId));
+  const registeredPumpKeys = new Set(
+    (await getRegisteredPumpKeys(woningId)).map(
+      (record) => `${resolveMqttWoning(record)}:${normalizePompId(record.pompId)}`
+    )
   );
 
   for (const pomp of livePompen) {
-    if (registeredPumpIds.has(normalizePompId(pomp.id))) {
+    const pumpKey = `${pomp.woning}:${normalizePompId(pomp.id)}`;
+    if (registeredPumpKeys.has(pumpKey)) {
       continue;
     }
 
-    const discoveryKey = `${woningId}:${pomp.id}`;
+    const discoveryKey = `${pomp.woning}:${pomp.id}`;
     if (announcedDiscoveredPompen.has(discoveryKey)) {
       continue;
     }
 
     announcedDiscoveredPompen.add(discoveryKey);
     recordPompInfo({
-      woning: woningId,
+      woning: pomp.woning,
       pompId: pomp.id,
       message: 'Pomp gevonden via MQTT en nog niet in database',
       topic: pomp.statusTopic,
@@ -123,66 +172,77 @@ async function syncDiscoveredPompen(woningId: string) {
   }
 }
 
-export async function getPompenForWoning(woningId: string) {
+export async function getPompenForWoning(woningId?: string | null) {
   ensureMqttSubscription();
   await syncDiscoveredPompen(woningId);
 
-  const livePompen = getPompenSnapshot().filter((record) => record.woning === woningId);
-  const livePompenById = new Map(
-    livePompen.map((record) => [normalizePompId(record.id), record])
+  const livePompen = getPompenSnapshot().filter((record) => matchesWoningScope(record.woning, woningId));
+  const livePompenByKey = new Map(
+    livePompen.map((record) => [`${record.woning}:${normalizePompId(record.id)}`, record])
   );
-  const registeredPompen = await getRegisteredPompenByWoningId(woningId);
+  const registeredPompen = await getRegisteredPompenInScope(woningId);
 
   return registeredPompen.map((registered) => {
-    const live = livePompenById.get(normalizePompId(registered.pompId));
+    const currentWoningId = String(registered.woningId);
+    const mqttWoning = resolveMqttWoning({
+      woningId: currentWoningId,
+      mqttWoning: registered.mqttWoning,
+    });
+    const live = livePompenByKey.get(`${mqttWoning}:${normalizePompId(registered.pompId)}`);
 
     return {
-      uniqueId: `${woningId}_${registered.pompId}`,
+      uniqueId: `${currentWoningId}_${registered.pompId}`,
       id: registered.pompId,
-      woning: woningId,
+      woning: currentWoningId,
       status: live?.status ?? toApiStatus(registered.status),
       lastUpdate: live?.lastUpdate ?? registered.lastUpdate ?? registered.createdAt ?? '',
-      statusTopic: live?.statusTopic ?? buildStatusTopic(woningId, registered.pompId),
-      commandTopic: live?.commandTopic ?? buildCommandTopic(woningId, registered.pompId),
+      statusTopic: live?.statusTopic ?? buildStatusTopic(mqttWoning, registered.pompId),
+      commandTopic: live?.commandTopic ?? buildCommandTopic(mqttWoning, registered.pompId),
     };
   });
 }
 
-export async function getRegisteredPompEventsForWoning(woningId: string) {
+export async function getRegisteredPompEventsForWoning(woningId?: string | null) {
   ensureMqttSubscription();
   await syncDiscoveredPompen(woningId);
 
-  const registeredPumpIds = new Set(
-    (await getRegisteredPompIdsByWoningId(woningId)).map(normalizePompId)
+  const registeredPumpKeys = new Set(
+    (await getRegisteredPumpKeys(woningId)).map(
+      (record) => `${resolveMqttWoning(record)}:${normalizePompId(record.pompId)}`
+    )
   );
 
-  return getPompLogSnapshot().filter(
-    (item) => item.woning === woningId && registeredPumpIds.has(normalizePompId(item.pompId))
+  return getPompLogSnapshot().filter((item) =>
+    registeredPumpKeys.has(`${item.woning}:${normalizePompId(item.pompId)}`)
   );
 }
 
-export async function getDiscoveredPompenForWoning(woningId: string) {
+export async function getDiscoveredPompenForWoning(woningId?: string | null) {
   ensureMqttSubscription();
   await syncDiscoveredPompen(woningId);
 
-  const livePompen = getPompenSnapshot().filter((record) => record.woning === woningId);
-  const registeredPumpIds = new Set(
-    (await getRegisteredPompIdsByWoningId(woningId)).map(normalizePompId)
+  const livePompen = getPompenSnapshot().filter((record) => matchesWoningScope(record.woning, woningId));
+  const registeredPumpKeys = new Set(
+    (await getRegisteredPumpKeys(woningId)).map(
+      (record) => `${resolveMqttWoning(record)}:${normalizePompId(record.pompId)}`
+    )
   );
 
-  return livePompen.filter((record) => !registeredPumpIds.has(normalizePompId(record.id)));
+  return livePompen.filter(
+    (record) => !registeredPumpKeys.has(`${record.woning}:${normalizePompId(record.id)}`)
+  );
 }
 
 export async function registerDiscoveredPomp(params: {
-  ownerId: string;
   woningId: string;
   pompId: string;
+  mqttWoning: string;
 }) {
   ensureMqttSubscription();
 
   const livePomp = getPompenSnapshot().find(
     (record) =>
-      record.woning === params.woningId &&
+      record.woning === params.mqttWoning &&
       normalizePompId(record.id) === normalizePompId(params.pompId)
   );
 
@@ -207,9 +267,9 @@ export async function registerDiscoveredPomp(params: {
   }
 
   await createRegisteredPompRecord({
-    ownerId: params.ownerId,
     woningId: params.woningId,
     pompId: params.pompId,
+    mqttWoning: params.mqttWoning,
     status: toDbStatus(String(livePomp.status)),
     lastUpdate: livePomp.lastUpdate,
   });
@@ -228,11 +288,11 @@ export async function registerDiscoveredPomp(params: {
   };
 }
 
-export async function getAuditLogForWoning(woningId: string) {
+export async function getAuditLogForWoning(woningId?: string | null) {
   ensureMqttSubscription();
   await syncDiscoveredPompen(woningId);
 
-  return getPompLogSnapshot().filter((item) => item.woning === woningId);
+  return getPompLogSnapshot().filter((item) => matchesWoningScope(item.woning, woningId));
 }
 
 export async function updatePompStatus(body: unknown) {

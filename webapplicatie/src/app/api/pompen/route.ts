@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
   try {
     const token = req.cookies.get('session')?.value ?? null;
     const user = await requireUserByToken(token);
-    const data = await getPompenForWoning(user.woning_id);
+    const data = await getPompenForWoning(user.rol === 'admin' ? null : user.woning_id);
     return NextResponse.json(data);
   } catch (err) {
     return NextResponse.json(

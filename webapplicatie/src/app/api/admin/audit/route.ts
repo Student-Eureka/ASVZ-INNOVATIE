@@ -22,8 +22,8 @@ function errorStatus(err: unknown) {
 export async function GET(req: NextRequest) {
   try {
     const token = req.cookies.get('session')?.value ?? null;
-    const user = await requireAdminByToken(token);
-    const data = await getAuditLogForWoning(user.woning_id);
+    await requireAdminByToken(token);
+    const data = await getAuditLogForWoning(null);
     return NextResponse.json(data);
   } catch (err) {
     return NextResponse.json(

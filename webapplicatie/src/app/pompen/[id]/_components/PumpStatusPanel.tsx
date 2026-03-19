@@ -1,4 +1,4 @@
-import { Activity, PauseCircle, Power, Radio, Send } from 'lucide-react';
+import { Activity, BellRing, MoonStar, PauseCircle, Power, Radio, Send } from 'lucide-react';
 
 import { formatStatusLabel, normalizePompStatus } from '../../_data/pompen';
 import type { PumpData } from '../_types/pomp';
@@ -14,6 +14,22 @@ interface PumpStatusPanelProps {
 
 function getStatusMeta(status: string) {
   const normalized = normalizePompStatus(status);
+
+  if (normalized === 'alarm') {
+    return {
+      icon: BellRing,
+      ringClass: 'border-rose-100 bg-rose-50 shadow-rose-200 text-rose-500',
+      barClass: 'bg-rose-500',
+    };
+  }
+
+  if (normalized === 'sluimerend') {
+    return {
+      icon: MoonStar,
+      ringClass: 'border-sky-100 bg-sky-50 shadow-sky-200 text-sky-600',
+      barClass: 'bg-sky-500',
+    };
+  }
 
   if (normalized === 'actief') {
     return {
@@ -48,6 +64,8 @@ export default function PumpStatusPanel({
 }: PumpStatusPanelProps) {
   const meta = getStatusMeta(data.status);
   const StatusIcon = meta.icon;
+  const canTriggerServo = normalizePompStatus(data.status) === 'alarm';
+  const isDisabled = servoLoading || isCoolingDown || !canTriggerServo;
 
   return (
     <div className="w-full md:w-[360px] p-6 md:p-10 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-gray-200 bg-white relative overflow-hidden">
@@ -75,9 +93,9 @@ export default function PumpStatusPanel({
 
       <button
         onClick={onServoAction}
-        disabled={servoLoading || isCoolingDown}
+        disabled={isDisabled}
         className={`w-full max-w-xs py-4 rounded-2xl flex items-center justify-center gap-3 text-lg font-bold shadow-lg transition-all active:scale-95 ${
-          servoLoading || isCoolingDown
+          isDisabled
             ? 'bg-slate-100 text-slate-400 border-2 border-slate-200 cursor-not-allowed'
             : 'bg-[#E30059] text-white hover:bg-[#c4004d] hover:shadow-red-200 shadow-red-200'
         }`}
@@ -87,7 +105,11 @@ export default function PumpStatusPanel({
         ) : (
           <Send size={22} />
         )}
-        {isCoolingDown ? `Beschikbaar in ${formatTime(cooldownTime)}` : 'Servo aansturen'}
+        {isCoolingDown
+          ? `Beschikbaar in ${formatTime(cooldownTime)}`
+          : canTriggerServo
+            ? 'Servo aansturen'
+            : 'Wacht op alarm'}
       </button>
     </div>
   );

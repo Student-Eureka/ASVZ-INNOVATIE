@@ -18,6 +18,14 @@ function readPumpId(pumpId: string | string[] | undefined) {
 function resolveStatusMessage(status: string) {
   const normalized = normalizePompStatus(status);
 
+  if (normalized === 'alarm') {
+    return 'Alarm ontvangen. Deze pomp wacht op een handmatige servo-actie vanuit de webapp.';
+  }
+
+  if (normalized === 'sluimerend') {
+    return 'Servo is aangestuurd. De pomp staat nu sluimerend.';
+  }
+
   if (normalized === 'actief') {
     return 'Pomp is actief en verwerkt op dit moment een melding.';
   }

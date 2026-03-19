@@ -10,9 +10,9 @@ interface DashboardContentProps {
   onQueryChange: (value: string) => void;
   stats: {
     totaal: number;
-    actief: number;
+    alarm: number;
+    sluimerend: number;
     rust: number;
-    inactief: number;
   };
 }
 
@@ -27,9 +27,9 @@ export default function DashboardContent({
     <section className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
         <StatCard label="Geregistreerde pompen" value={stats.totaal} />
-        <StatCard label="Actief" value={stats.actief} />
+        <StatCard label="Alarm" value={stats.alarm} />
+        <StatCard label="Sluimerend" value={stats.sluimerend} />
         <StatCard label="Rust" value={stats.rust} />
-        <StatCard label="Inactief" value={stats.inactief} />
       </div>
 
       <div className="rounded-3xl bg-white border border-slate-200 shadow-sm">

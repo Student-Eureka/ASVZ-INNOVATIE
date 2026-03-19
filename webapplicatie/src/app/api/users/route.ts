@@ -22,7 +22,7 @@ function errorStatus(err: unknown) {
 export async function GET(req: NextRequest) {
   try {
     const token = req.cookies.get('session')?.value ?? null;
-    const admin = await requireAdminByToken(token);
+    await requireAdminByToken(token);
     const rows = await getUsers();
     return NextResponse.json(rows);
   } catch (err) {
@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const token = req.cookies.get('session')?.value ?? null;
-    const admin = await requireAdminByToken(token);
+    await requireAdminByToken(token);
     const payload = await req.json();
     const result = await createUser(payload);
     if (!result.success) {
@@ -80,7 +80,7 @@ export async function DELETE(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   try {
     const token = req.cookies.get('session')?.value ?? null;
-    const admin = await requireAdminByToken(token);
+    await requireAdminByToken(token);
     const payload = await req.json();
     const result = await updateUser(payload);
     if (!result.success) {

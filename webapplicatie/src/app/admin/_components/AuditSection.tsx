@@ -15,6 +15,12 @@ function getTone(entry: AuditRow) {
   }
 
   const status = String(entry.status ?? '').toLowerCase();
+  if (status === 'alarm') {
+    return 'bg-rose-50 text-rose-700 border-rose-200';
+  }
+  if (status === 'sluimerend') {
+    return 'bg-sky-50 text-sky-700 border-sky-200';
+  }
   if (status === 'actief') {
     return 'bg-emerald-50 text-emerald-700 border-emerald-200';
   }

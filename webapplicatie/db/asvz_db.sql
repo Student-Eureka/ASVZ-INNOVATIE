@@ -35,6 +35,13 @@ CREATE TABLE `woningen` (
   `last_login` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Gegevens voor tabel `woningen`
+--
+
+INSERT INTO `woningen` (`woning_id`, `gebruikersnaam`, `wachtwoord`, `rol`, `last_login`) VALUES
+(1, 'root', '$2b$12$rQeg6xvxrL0soqdrV8isl.n7cNBEXdLc26KhgIJEK3inJQFTCeV02', 'admin', NULL);
+
 -- --------------------------------------------------------
 
 --
@@ -45,7 +52,7 @@ CREATE TABLE `pompen` (
   `id` int(11) NOT NULL,
   `woning_id` int(11) NOT NULL,
   `pomp_code` varchar(100) NOT NULL,
-  `status` enum('Inactief','Rust','Actief') DEFAULT 'Inactief',
+  `status` enum('Inactief','Rust','Actief','Alarm','Sluimerend') DEFAULT 'Inactief',
   `laatste_update` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `created_at` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -97,7 +104,7 @@ ALTER TABLE `sessions`
 --
 
 ALTER TABLE `woningen`
-  MODIFY `woning_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `woning_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 ALTER TABLE `pompen`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;

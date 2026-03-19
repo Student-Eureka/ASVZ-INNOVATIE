@@ -1,4 +1,4 @@
-export type PumpStatus = 'actief' | 'rust' | 'inactief' | string;
+export type PumpStatus = 'actief' | 'rust' | 'inactief' | 'alarm' | 'sluimerend' | string;
 
 export interface PumpHistoryItem {
   id: string;

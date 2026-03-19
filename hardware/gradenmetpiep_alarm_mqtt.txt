@@ -1,0 +1,191 @@
+from machine import Pin, PWM, ADC
+from umqtt.simple import MQTTClient
+import network
+import time
+
+# =========================
+# NETWERK / MQTT
+# =========================
+WIFI_SSID = "Eureka_wifi"
+WIFI_PASSWORD = "EurekaEigenWifi"
+
+MQTT_BROKER = "10.1.1.121"
+MQTT_PORT = 1883
+MQTT_USER = "asvzmqtt"
+MQTT_PASSWORD = "asvzmqtt"
+
+CLIENT_ID = "pico_alarm_pomp_3"
+WONING = "woning_a"
+POMP = "pomp_3"
+STATUS_TOPIC = f"asvz/{WONING}/{POMP}/status"
+COMMAND_TOPIC = f"asvz/{WONING}/{POMP}/set"
+
+HEARTBEAT_SECONDS = 5
+
+# =========================
+# SERVO / MICROFOON
+# =========================
+SERVO_PIN = 15
+MIC_PIN = 26
+THRESHOLD = 62000
+
+HOME = 5
+TARGET = 0
+REVERSE = False
+
+MIN_US = 500
+MAX_US = 2500
+
+COOLDOWN_MS = 800
+last_trigger = 0
+
+current_status = "sluimerend"
+last_publish_ms = 0
+client = None
+
+servo = PWM(Pin(SERVO_PIN))
+servo.freq(50)
+
+mic = ADC(MIC_PIN)
+
+
+def wifi_connect(timeout_s=20):
+    print("[wifi] connecting...")
+    wlan = network.WLAN(network.STA_IF)
+    wlan.active(True)
+
+    if not wlan.isconnected():
+        wlan.connect(WIFI_SSID, WIFI_PASSWORD)
+        start = time.time()
+        while not wlan.isconnected():
+            if time.time() - start > timeout_s:
+                print("[wifi] ERROR: timeout")
+                return None
+            time.sleep(0.5)
+
+    print("[wifi] connected:", wlan.ifconfig())
+    return wlan
+
+
+def set_angle(angle):
+    angle = max(0, min(180, angle))
+
+    if REVERSE:
+        angle = 180 - angle
+
+    pulse_us = MIN_US + (MAX_US - MIN_US) * angle / 180
+    duty = int((pulse_us / 20000) * 65535)
+    servo.duty_u16(duty)
+
+
+def can_trigger():
+    global last_trigger
+    now = time.ticks_ms()
+    if time.ticks_diff(now, last_trigger) >= COOLDOWN_MS:
+        last_trigger = now
+        return True
+    return False
+
+
+def publish_status(client, status):
+    global current_status, last_publish_ms
+    current_status = status
+    client.publish(STATUS_TOPIC, status.encode(), retain=True)
+    last_publish_ms = time.ticks_ms()
+    print("[mqtt] status =>", status)
+
+
+def do_move():
+    print("[servo] beweging")
+    set_angle(TARGET)
+    time.sleep(0.2)
+    set_angle(HOME)
+    time.sleep(0.2)
+
+
+def handle_servo_command(payload):
+    command = payload.decode().strip().upper()
+    print("[mqtt] command <=", command)
+
+    if command != "SWEEP":
+        return
+
+    do_move()
+    publish_status(client, "sluimerend")
+
+
+def on_mqtt_message(topic, payload):
+    try:
+        handle_servo_command(payload)
+    except Exception as e:
+        print("[mqtt] message ERROR:", e)
+
+
+def mqtt_connect():
+    print("[mqtt] connecting...")
+    next_client = MQTTClient(
+        client_id=CLIENT_ID,
+        server=MQTT_BROKER,
+        port=MQTT_PORT,
+        user=MQTT_USER,
+        password=MQTT_PASSWORD,
+        keepalive=60
+    )
+    next_client.set_callback(on_mqtt_message)
+    next_client.connect()
+    next_client.subscribe(COMMAND_TOPIC)
+    print("[mqtt] connected")
+    print("[mqtt] subscribed:", COMMAND_TOPIC)
+    return next_client
+
+
+def main():
+    global client
+
+    if not wifi_connect():
+        return
+
+    client = mqtt_connect()
+
+    set_angle(HOME)
+    time.sleep(1)
+
+    print("Servo start op home:", HOME)
+    print("Microfoon meet constant")
+
+    publish_status(client, "sluimerend")
+
+    counter = 0
+
+    while True:
+        try:
+            client.check_msg()
+
+            mic_value = mic.read_u16()
+
+            counter += 1
+            if counter >= 10:
+                print("Mic:", mic_value)
+                counter = 0
+
+            if mic_value > THRESHOLD and can_trigger() and current_status != "alarm":
+                print("PIEP GEDETECTEERD")
+                publish_status(client, "alarm")
+
+            now = time.ticks_ms()
+            if time.ticks_diff(now, last_publish_ms) > HEARTBEAT_SECONDS * 1000:
+                publish_status(client, current_status)
+
+            time.sleep(0.05)
+
+        except KeyboardInterrupt:
+            print("Gestopt")
+            servo.duty_u16(0)
+            break
+        except Exception as e:
+            print("[loop] ERROR:", e)
+            time.sleep(1)
+
+
+if __name__ == "__main__":
+    main()

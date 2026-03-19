@@ -6,6 +6,7 @@ interface ServoRequestBody {
   woning?: unknown;
   pompId?: unknown;
   payload?: unknown;
+  topic?: unknown;
 }
 
 function requireEnv(name: string): string {
@@ -26,6 +27,7 @@ export async function POST(req: Request) {
     const woning = readString(body.woning) || 'woning_a';
     const pompId = readString(body.pompId) || 'pomp_1';
     const payload = readString(body.payload) || 'SWEEP';
+    const topic = readString(body.topic);
 
     const host = requireEnv('SERVO_MQTT_HOST');
     const port = Number(requireEnv('SERVO_MQTT_PORT'));
@@ -43,7 +45,7 @@ export async function POST(req: Request) {
         password,
         rejectUnauthorized,
       },
-      { woning, pompId, payload }
+      { woning, pompId, payload, topic }
     );
 
     return NextResponse.json({

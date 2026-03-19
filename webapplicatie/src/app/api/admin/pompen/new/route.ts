@@ -29,8 +29,8 @@ function errorStatus(err: unknown) {
 export async function GET(req: NextRequest) {
   try {
     const token = req.cookies.get('session')?.value ?? null;
-    const user = await requireAdminByToken(token);
-    const data = await getDiscoveredPompenForWoning(user.woning_id);
+    await requireAdminByToken(token);
+    const data = await getDiscoveredPompenForWoning(null);
     return NextResponse.json(data);
   } catch (err) {
     return NextResponse.json(
@@ -43,21 +43,23 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const token = req.cookies.get('session')?.value ?? null;
-    const user = await requireAdminByToken(token);
+    await requireAdminByToken(token);
     const body = await req.json();
     const pompId = readString(body?.pompId);
+    const mqttWoning = readString(body?.woning);
+    const woningId = readString(body?.targetWoningId);
 
-    if (!pompId) {
+    if (!pompId || !woningId || !mqttWoning) {
       return NextResponse.json(
-        { success: false, message: 'Geen pompId opgegeven' },
+        { success: false, message: 'Geen MQTT-woning, doelwoning of pompId opgegeven' },
         { status: 400 }
       );
     }
 
     const result = await registerDiscoveredPomp({
-      ownerId: user.woning_id,
-      woningId: user.woning_id,
+      woningId,
       pompId,
+      mqttWoning,
     });
 
     return NextResponse.json({ success: true, ...result });

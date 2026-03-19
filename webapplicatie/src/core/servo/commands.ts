@@ -14,10 +14,11 @@ interface ServoTarget {
   woning: string;
   pompId: string;
   payload?: string;
+  topic?: string;
 }
 
 export async function sendServoSweep(config: ServoCommandConfig, target: ServoTarget) {
-  const topic = `asvz/${target.woning}/${target.pompId}/set`;
+  const topic = target.topic || `asvz/${target.woning}/${target.pompId}/set`;
   const payload = target.payload ?? 'SWEEP';
 
   await publishOnce(topic, payload, {
@@ -31,7 +32,7 @@ export async function sendServoSweep(config: ServoCommandConfig, target: ServoTa
   });
 
   recordServoCommand({
-    woning: target.woning,
+    woning: topic.split('/')[1] || target.woning,
     pompId: target.pompId,
     message: `Servo-commando verstuurd (${payload})`,
   });

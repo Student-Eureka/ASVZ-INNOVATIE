@@ -1,4 +1,4 @@
-export type PompStatus = 'actief' | 'rust' | 'inactief' | string;
+export type PompStatus = 'actief' | 'rust' | 'inactief' | 'alarm' | 'sluimerend' | string;
 
 export interface PompApiRecord {
   uniqueId: string;
